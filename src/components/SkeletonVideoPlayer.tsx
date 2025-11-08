@@ -62,6 +62,25 @@ export const SkeletonVideoPlayer = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const animationFrameRef = useRef<number>();
+  const FPS = 15; // MediaPipe detection FPS
+
+  // Interpolate between two keypoint frames for smooth animation
+  const interpolateKeypoints = (
+    frame1: PoseKeypoint[], 
+    frame2: PoseKeypoint[], 
+    factor: number
+  ): PoseKeypoint[] => {
+    return frame1.map((kp1, index) => {
+      const kp2 = frame2[index];
+      return {
+        ...kp1,
+        x: kp1.x + (kp2.x - kp1.x) * factor,
+        y: kp1.y + (kp2.y - kp1.y) * factor,
+        z: kp1.z + (kp2.z - kp1.z) * factor,
+        score: kp1.score + (kp2.score - kp1.score) * factor,
+      };
+    });
+  };
 
   const drawSkeleton = (keypoints: PoseKeypoint[], canvas: HTMLCanvasElement, video: HTMLVideoElement) => {
     const ctx = canvas.getContext('2d');
@@ -77,7 +96,9 @@ export const SkeletonVideoPlayer = ({
     }
 
     // Draw connections (skeleton lines) with confidence-based coloring
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
     
     POSE_CONNECTIONS.forEach(([start, end]) => {
       const startPoint = keypoints.find(kp => kp.name === start);
@@ -87,18 +108,27 @@ export const SkeletonVideoPlayer = ({
         const avgScore = (startPoint.score + endPoint.score) / 2;
         
         // Confidence-based color: green (high) -> yellow (medium) -> red (low)
+        let strokeColor;
         if (avgScore > 0.7) {
-          ctx.strokeStyle = 'rgba(34, 197, 94, 0.9)'; // Green
+          strokeColor = 'rgba(34, 197, 94, 0.95)'; // Green
         } else if (avgScore > 0.5) {
-          ctx.strokeStyle = 'rgba(234, 179, 8, 0.9)'; // Yellow
+          strokeColor = 'rgba(234, 179, 8, 0.95)'; // Yellow
         } else {
-          ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)'; // Red
+          strokeColor = 'rgba(239, 68, 68, 0.9)'; // Red
         }
         
+        // Draw shadow/glow for depth
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = strokeColor;
+        
+        ctx.strokeStyle = strokeColor;
         ctx.beginPath();
         ctx.moveTo(startPoint.x * canvas.width, startPoint.y * canvas.height);
         ctx.lineTo(endPoint.x * canvas.width, endPoint.y * canvas.height);
         ctx.stroke();
+        
+        // Reset shadow
+        ctx.shadowBlur = 0;
       }
     });
 
@@ -122,16 +152,23 @@ export const SkeletonVideoPlayer = ({
         }
         
         // Draw outer circle (glow)
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = glowColor;
         ctx.fillStyle = glowColor;
         ctx.beginPath();
-        ctx.arc(x, y, 10, 0, 2 * Math.PI);
+        ctx.arc(x, y, 14, 0, 2 * Math.PI);
         ctx.fill();
         
         // Draw inner circle (point)
+        ctx.shadowBlur = 6;
+        ctx.shadowColor = pointColor;
         ctx.fillStyle = pointColor;
         ctx.beginPath();
-        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.arc(x, y, 7, 0, 2 * Math.PI);
         ctx.fill();
+        
+        // Reset shadow
+        ctx.shadowBlur = 0;
       }
     });
   };
@@ -142,14 +179,25 @@ export const SkeletonVideoPlayer = ({
     
     if (!video || !canvas || !keypointsData.length) return;
 
-    // Calculate which frame to show based on video time
-    const fps = 15;
-    const frameIndex = Math.floor(video.currentTime * fps);
+    // Calculate exact frame position with interpolation factor
+    const exactFrameIndex = video.currentTime * FPS;
+    const frameIndex = Math.floor(exactFrameIndex);
+    const nextFrameIndex = Math.min(frameIndex + 1, keypointsData.length - 1);
+    const interpolationFactor = exactFrameIndex - frameIndex; // 0 to 1
     
     if (frameIndex < keypointsData.length) {
-      drawSkeleton(keypointsData[frameIndex], canvas, video);
+      const currentFrame = keypointsData[frameIndex];
+      const nextFrame = keypointsData[nextFrameIndex];
+      
+      // Interpolate between frames for smooth 60 FPS motion from 15 FPS data
+      const interpolatedFrame = frameIndex === nextFrameIndex 
+        ? currentFrame 
+        : interpolateKeypoints(currentFrame, nextFrame, interpolationFactor);
+      
+      drawSkeleton(interpolatedFrame, canvas, video);
     }
 
+    // Continue animation loop during playback
     if (!video.paused && !video.ended) {
       animationFrameRef.current = requestAnimationFrame(updateCanvas);
     }
@@ -183,23 +231,33 @@ export const SkeletonVideoPlayer = ({
       }
     };
 
-    const handleTimeUpdate = () => {
-      if (!isPlaying) {
-        updateCanvas();
-      }
+    const handleLoadedMetadata = () => {
+      // Draw initial frame when video loads
+      updateCanvas();
     };
 
     video.addEventListener('ended', handleEnded);
-    video.addEventListener('timeupdate', handleTimeUpdate);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
 
     return () => {
       video.removeEventListener('ended', handleEnded);
-      video.removeEventListener('timeupdate', handleTimeUpdate);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [isPlaying, keypointsData]);
+  }, [keypointsData]);
+
+  // Separate effect for continuous canvas updates during playback
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Start continuous updates when playing
+    if (isPlaying && !video.paused && !video.ended) {
+      updateCanvas();
+    }
+  }, [isPlaying]);
 
   return (
     <div className={`relative ${className}`}>
