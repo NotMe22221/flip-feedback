@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +13,29 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { headers } = req;
     const upgradeHeader = headers.get("upgrade") || "";
 
@@ -70,10 +94,10 @@ serve(async (req) => {
 
     // Handle errors
     deepgramSocket.onerror = (error) => {
-      console.error("Deepgram WebSocket error:", error);
+      console.error("Deepgram WebSocket error:", { timestamp: new Date().toISOString() });
       if (socket.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ 
-          error: "Deepgram connection error" 
+          error: "Connection error. Please try again." 
         }));
       }
     };
@@ -99,9 +123,9 @@ serve(async (req) => {
 
     return response;
   } catch (error) {
-    console.error("WebSocket setup error:", error);
+    console.error("WebSocket setup error:", { timestamp: new Date().toISOString() });
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      JSON.stringify({ error: "Service temporarily unavailable" }),
       { 
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" } 

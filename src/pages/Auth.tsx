@@ -10,6 +10,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Activity, Brain, Mic, Clock } from "lucide-react";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string().email('Invalid email address').max(255, 'Email too long'),
+  password: z.string().min(8, 'Password must be at least 8 characters').max(72, 'Password too long')
+});
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -44,6 +50,18 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate input
+    const validationResult = authSchema.safeParse({ email, password });
+    if (!validationResult.success) {
+      toast({
+        title: "Validation Error",
+        description: validationResult.error.issues[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -76,6 +94,18 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate input
+    const validationResult = authSchema.safeParse({ email, password });
+    if (!validationResult.success) {
+      toast({
+        title: "Validation Error",
+        description: validationResult.error.issues[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +12,29 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!,
+      { global: { headers: { Authorization: authHeader } } }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.log("=== ElevenLabs Signed URL Request ===");
     const { agentId } = await req.json();
     console.log("Requested Agent ID:", agentId);
@@ -52,26 +76,21 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error("ElevenLabs API error:", {
         status: response.status,
-        statusText: response.statusText,
-        body: errorText,
+        timestamp: new Date().toISOString(),
       });
       
-      let errorMessage = "Failed to get signed URL from ElevenLabs";
+      let errorMessage = "Failed to generate voice agent URL";
       
       if (response.status === 401) {
-        errorMessage = "Invalid ElevenLabs API key";
+        errorMessage = "Service configuration error";
       } else if (response.status === 404) {
-        errorMessage = `Agent not found. Please verify the agent ID: ${agentId}`;
+        errorMessage = "Voice agent not found";
       } else if (response.status === 403) {
-        errorMessage = "Access denied. Check if the agent is public or your API key has access";
+        errorMessage = "Access denied to voice agent";
       }
       
       return new Response(
-        JSON.stringify({ 
-          error: errorMessage,
-          details: errorText,
-          agentId: agentId
-        }),
+        JSON.stringify({ error: errorMessage }),
         { 
           status: response.status, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
@@ -95,14 +114,9 @@ serve(async (req) => {
       }
     );
   } catch (error) {
-    console.error("=== Error in elevenlabs-signed-url function ===");
-    console.error("Error:", error);
-    console.error("Error stack:", error instanceof Error ? error.stack : "N/A");
+    console.error("Error in elevenlabs-signed-url function:", { timestamp: new Date().toISOString() });
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : "Unknown error",
-        type: error instanceof Error ? error.constructor.name : typeof error
-      }),
+      JSON.stringify({ error: "Service temporarily unavailable" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -29,7 +29,7 @@ export type Database = {
           smoothness_score: number | null
           stability_score: number | null
           thumbnail_url: string | null
-          user_id: string | null
+          user_id: string
           video_path: string | null
           video_url: string | null
           voice_notes: string | null
@@ -48,7 +48,7 @@ export type Database = {
           smoothness_score?: number | null
           stability_score?: number | null
           thumbnail_url?: string | null
-          user_id?: string | null
+          user_id?: string
           video_path?: string | null
           video_url?: string | null
           voice_notes?: string | null
@@ -67,7 +67,7 @@ export type Database = {
           smoothness_score?: number | null
           stability_score?: number | null
           thumbnail_url?: string | null
-          user_id?: string | null
+          user_id?: string
           video_path?: string | null
           video_url?: string | null
           voice_notes?: string | null
