@@ -91,28 +91,43 @@ Be conversational, supportive, and knowledgeable. Keep responses concise but hel
       const agentId = "agent_0201k9jbjjp1e53azsch7mwwreqx";
       
       // Get signed URL from backend
+      console.log("Requesting signed URL for agent:", agentId);
       const { data, error } = await supabase.functions.invoke('elevenlabs-signed-url', {
         body: { agentId },
       });
       
       if (error) {
-        console.error("Failed to get signed URL:", error);
-        throw new Error("Failed to get signed URL. Make sure you've created an ElevenLabs agent and updated the agentId.");
+        console.error("Edge function error:", error);
+        throw new Error(`Edge function error: ${error.message || JSON.stringify(error)}`);
       }
       
-      if (!data?.signedUrl) {
+      if (!data) {
+        console.error("No data returned from edge function");
+        throw new Error("No response from server");
+      }
+
+      if (data.error) {
+        console.error("Error from ElevenLabs:", data);
+        throw new Error(data.error + (data.details ? ` - ${data.details}` : ''));
+      }
+      
+      if (!data.signedUrl) {
+        console.error("No signed URL in response:", data);
         throw new Error("No signed URL returned from server");
       }
 
-      console.log("Starting conversation with signed URL");
+      console.log("Successfully got signed URL, starting conversation...");
       await conversation.startSession({ 
         signedUrl: data.signedUrl 
       });
+      
+      console.log("Conversation session started successfully");
     } catch (error) {
-      console.error("Failed to initialize voice coach:", error);
+      console.error("=== Voice Coach Initialization Failed ===");
+      console.error("Error details:", error);
       toast({
-        title: "Setup Required",
-        description: error instanceof Error ? error.message : "Please create an ElevenLabs agent first. See ELEVENLABS_SETUP.md for instructions.",
+        title: "Voice Coach Error",
+        description: error instanceof Error ? error.message : "Unknown error occurred. Check console for details.",
         variant: "destructive",
       });
     } finally {
