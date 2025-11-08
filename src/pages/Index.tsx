@@ -12,16 +12,19 @@ import { Upload, BarChart3, History, Mic } from "lucide-react";
 interface Session {
   id: string;
   created_at: string;
-  ai_score: number;
-  posture_score: number;
-  stability_score: number;
-  smoothness_score: number;
+  ai_score: number | null;
+  posture_score: number | null;
+  stability_score: number | null;
+  smoothness_score: number | null;
 }
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("upload");
   const [isProcessing, setIsProcessing] = useState(false);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   const [currentAnalysis, setCurrentAnalysis] = useState<{
     videoUrl: string;
     keypointsData: PoseKeypoint[][];
@@ -35,13 +38,25 @@ const Index = () => {
   } | null>(null);
   const { toast } = useToast();
 
-  // Fetch session history
-  const fetchSessions = async () => {
+  // Fetch session history with pagination
+  const fetchSessions = async (page: number = 1) => {
+    // Get total count
+    const { count } = await supabase
+      .from("analysis_sessions")
+      .select("*", { count: 'exact', head: true });
+
+    const totalCount = count || 0;
+    setTotalPages(Math.ceil(totalCount / ITEMS_PER_PAGE));
+
+    // Fetch paginated data
+    const from = (page - 1) * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
     const { data, error } = await supabase
       .from("analysis_sessions")
       .select("id, created_at, ai_score, posture_score, stability_score, smoothness_score")
       .order("created_at", { ascending: false })
-      .limit(5);
+      .range(from, to);
 
     if (error) {
       console.error("Error fetching sessions:", error);
@@ -50,8 +65,13 @@ const Index = () => {
     }
   };
 
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchSessions(page);
+  };
+
   useEffect(() => {
-    fetchSessions();
+    fetchSessions(currentPage);
   }, []);
 
   const handleVideoSelect = async (file: File) => {
@@ -231,7 +251,12 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="history">
-            <SessionHistory sessions={sessions} />
+            <SessionHistory 
+              sessions={sessions} 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </TabsContent>
         </Tabs>
       </div>

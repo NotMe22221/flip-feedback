@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { History, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { History, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 
 interface Session {
@@ -14,9 +15,12 @@ interface Session {
 
 interface SessionHistoryProps {
   sessions: Session[];
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
-export const SessionHistory = ({ sessions }: SessionHistoryProps) => {
+export const SessionHistory = ({ sessions, currentPage, totalPages, onPageChange }: SessionHistoryProps) => {
   const getScoreBadge = (score: number) => {
     if (score >= 9) return { label: "Excellent", variant: "default" as const };
     if (score >= 7) return { label: "Good", variant: "secondary" as const };
@@ -100,6 +104,35 @@ export const SessionHistory = ({ sessions }: SessionHistoryProps) => {
                   </div>
                 );
               })}
+            </div>
+          )}
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-6 border-t">
+              <div className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
