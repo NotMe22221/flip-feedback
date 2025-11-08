@@ -38,10 +38,12 @@ export const useSpeechToText = () => {
         console.log('Connected to Deepgram');
         setIsRecording(true);
 
-        // Set up MediaRecorder to capture audio
-        const mediaRecorder = new MediaRecorder(stream, {
-          mimeType: 'audio/webm',
-        });
+        // Set up MediaRecorder to capture audio with opus codec
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
+          ? 'audio/webm;codecs=opus' 
+          : 'audio/webm';
+        
+        const mediaRecorder = new MediaRecorder(stream, { mimeType });
         mediaRecorderRef.current = mediaRecorder;
 
         mediaRecorder.ondataavailable = (event) => {
@@ -79,11 +81,25 @@ export const useSpeechToText = () => {
           description: 'Failed to connect to speech service',
           variant: 'destructive',
         });
+        // Clean up on error
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+          mediaRecorderRef.current.stop();
+        }
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+        }
       };
 
-      ws.onclose = () => {
-        console.log('WebSocket closed');
+      ws.onclose = (event) => {
+        console.log('WebSocket closed', { code: event.code, reason: event.reason });
         setIsRecording(false);
+        // Clean up on close
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+          mediaRecorderRef.current.stop();
+        }
+        if (streamRef.current) {
+          streamRef.current.getTracks().forEach(track => track.stop());
+        }
       };
 
     } catch (error) {

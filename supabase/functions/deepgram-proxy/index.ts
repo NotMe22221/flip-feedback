@@ -34,15 +34,12 @@ serve(async (req) => {
     console.log("Upgrading to WebSocket connection");
     const { socket, response } = Deno.upgradeWebSocket(req);
 
-    // Connect to Deepgram's streaming API
-    const deepgramUrl = "wss://api.deepgram.com/v1/listen?model=nova-2&language=en&smart_format=true&interim_results=true";
+    // Connect to Deepgram's streaming API with opus encoding
+    const deepgramUrl = "wss://api.deepgram.com/v1/listen?model=nova-2&language=en&smart_format=true&interim_results=true&encoding=opus";
     
     console.log("Connecting to Deepgram API");
-    const deepgramSocket = new WebSocket(deepgramUrl, {
-      headers: {
-        Authorization: `Token ${DEEPGRAM_API_KEY}`,
-      },
-    });
+    // Authenticate using Sec-WebSocket-Protocol header
+    const deepgramSocket = new WebSocket(deepgramUrl, ["token", DEEPGRAM_API_KEY]);
 
     // Forward messages from client to Deepgram
     socket.onmessage = (event) => {
@@ -86,15 +83,15 @@ serve(async (req) => {
     };
 
     // Handle disconnections
-    deepgramSocket.onclose = () => {
-      console.log("Deepgram connection closed");
+    deepgramSocket.onclose = (event) => {
+      console.log("Deepgram connection closed", { code: event.code, reason: event.reason });
       if (socket.readyState === WebSocket.OPEN) {
         socket.close();
       }
     };
 
-    socket.onclose = () => {
-      console.log("Client connection closed");
+    socket.onclose = (event) => {
+      console.log("Client connection closed", { code: event.code, reason: event.reason });
       if (deepgramSocket.readyState === WebSocket.OPEN) {
         deepgramSocket.close();
       }
