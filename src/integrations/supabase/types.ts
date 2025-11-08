@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      analysis_sessions: {
+        Row: {
+          ai_score: number | null
+          avg_hip_angle: number | null
+          avg_knee_angle: number | null
+          created_at: string
+          duration_seconds: number | null
+          feedback_text: string | null
+          id: string
+          keypoints_data: Json | null
+          landing_stability: number | null
+          posture_score: number | null
+          smoothness_score: number | null
+          stability_score: number | null
+          thumbnail_url: string | null
+          video_url: string
+        }
+        Insert: {
+          ai_score?: number | null
+          avg_hip_angle?: number | null
+          avg_knee_angle?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          feedback_text?: string | null
+          id?: string
+          keypoints_data?: Json | null
+          landing_stability?: number | null
+          posture_score?: number | null
+          smoothness_score?: number | null
+          stability_score?: number | null
+          thumbnail_url?: string | null
+          video_url: string
+        }
+        Update: {
+          ai_score?: number | null
+          avg_hip_angle?: number | null
+          avg_knee_angle?: number | null
+          created_at?: string
+          duration_seconds?: number | null
+          feedback_text?: string | null
+          id?: string
+          keypoints_data?: Json | null
+          landing_stability?: number | null
+          posture_score?: number | null
+          smoothness_score?: number | null
+          stability_score?: number | null
+          thumbnail_url?: string | null
+          video_url?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
