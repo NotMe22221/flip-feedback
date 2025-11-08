@@ -67,7 +67,9 @@ serve(async (req) => {
     }
 
     console.log("Upgrading to WebSocket connection for user:", user.id);
-    const { socket, response } = Deno.upgradeWebSocket(req);
+    const { socket, response } = Deno.upgradeWebSocket(req, {
+      protocol: 'auth'
+    });
 
     // Connect to Deepgram's streaming API with opus encoding
     const deepgramUrl = "wss://api.deepgram.com/v1/listen?model=nova-2&language=en&smart_format=true&interim_results=true&encoding=opus";
