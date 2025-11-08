@@ -106,11 +106,11 @@ const Index = () => {
             stability_score: analysis.stability,
             smoothness_score: analysis.smoothness,
             feedback_text: analysis.feedback.join("\n"),
-            keypoints_data: keypointsData,
+            keypoints_data: keypointsData as any,
             avg_knee_angle: analysis.avgKneeAngle,
             avg_hip_angle: analysis.avgHipAngle,
             landing_stability: analysis.landingStability,
-          })
+          } as any)
           .select()
           .single();
 
