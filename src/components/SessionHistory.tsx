@@ -6,10 +6,10 @@ import { format } from "date-fns";
 interface Session {
   id: string;
   created_at: string;
-  ai_score: number;
-  posture_score: number;
-  stability_score: number;
-  smoothness_score: number;
+  ai_score: number | null;
+  posture_score: number | null;
+  stability_score: number | null;
+  smoothness_score: number | null;
 }
 
 interface SessionHistoryProps {
@@ -28,6 +28,7 @@ export const SessionHistory = ({ sessions }: SessionHistoryProps) => {
     if (sessions.length < 2) return null;
     const latest = sessions[0].ai_score;
     const previous = sessions[1].ai_score;
+    if (latest === null || previous === null) return null;
     const change = latest - previous;
     return {
       value: Math.abs(change).toFixed(1),
@@ -65,7 +66,8 @@ export const SessionHistory = ({ sessions }: SessionHistoryProps) => {
           ) : (
             <div className="space-y-3">
               {sessions.map((session, index) => {
-                const badge = getScoreBadge(session.ai_score);
+                const aiScore = session.ai_score ?? 0;
+                const badge = getScoreBadge(aiScore);
                 return (
                   <div
                     key={session.id}
@@ -74,7 +76,7 @@ export const SessionHistory = ({ sessions }: SessionHistoryProps) => {
                     <div className="flex items-center gap-4">
                       <div className="flex flex-col items-center justify-center w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-blue-600/20">
                         <div className="text-2xl font-bold text-primary">
-                          {session.ai_score.toFixed(1)}
+                          {aiScore.toFixed(1)}
                         </div>
                         <div className="text-xs text-muted-foreground">Score</div>
                       </div>
@@ -83,11 +85,11 @@ export const SessionHistory = ({ sessions }: SessionHistoryProps) => {
                           {format(new Date(session.created_at), 'MMM d, yyyy')}
                         </div>
                         <div className="flex gap-2 text-xs text-muted-foreground">
-                          <span>Posture: {session.posture_score}%</span>
+                          <span>Posture: {session.posture_score ?? 0}%</span>
                           <span>•</span>
-                          <span>Stability: {session.stability_score}%</span>
+                          <span>Stability: {session.stability_score ?? 0}%</span>
                           <span>•</span>
-                          <span>Smoothness: {session.smoothness_score}%</span>
+                          <span>Smoothness: {session.smoothness_score ?? 0}%</span>
                         </div>
                       </div>
                     </div>
