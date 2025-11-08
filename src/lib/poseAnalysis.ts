@@ -1,8 +1,10 @@
 // Pose analysis utilities for gymnastics routine evaluation
+import { PoseLandmarker, FilesetResolver, DrawingUtils } from "@mediapipe/tasks-vision";
 
 export interface PoseKeypoint {
   x: number;
   y: number;
+  z?: number;
   score: number;
   name: string;
 }
@@ -17,6 +19,20 @@ export interface AnalysisResult {
   avgHipAngle: number;
   landingStability: number;
 }
+
+// MediaPipe Pose landmark indices
+const POSE_LANDMARKS = {
+  LEFT_SHOULDER: 11,
+  RIGHT_SHOULDER: 12,
+  LEFT_HIP: 23,
+  RIGHT_HIP: 24,
+  LEFT_KNEE: 25,
+  RIGHT_KNEE: 26,
+  LEFT_ANKLE: 27,
+  RIGHT_ANKLE: 28,
+  LEFT_ELBOW: 13,
+  RIGHT_ELBOW: 14,
+};
 
 // Calculate angle between three points
 const calculateAngle = (p1: PoseKeypoint, p2: PoseKeypoint, p3: PoseKeypoint): number => {
@@ -46,11 +62,11 @@ export const analyzePose = (keypointsData: PoseKeypoint[][]): AnalysisResult => 
 
   // Process each frame
   keypointsData.forEach((keypoints, frameIndex) => {
-    // Find key body points (simplified indices - adjust based on actual model)
-    const leftHip = keypoints.find(kp => kp.name.includes('left_hip'));
-    const leftKnee = keypoints.find(kp => kp.name.includes('left_knee'));
-    const leftAnkle = keypoints.find(kp => kp.name.includes('left_ankle'));
-    const leftShoulder = keypoints.find(kp => kp.name.includes('left_shoulder'));
+    // Find key body points by name
+    const leftHip = keypoints.find(kp => kp.name === 'left_hip');
+    const leftKnee = keypoints.find(kp => kp.name === 'left_knee');
+    const leftAnkle = keypoints.find(kp => kp.name === 'left_ankle');
+    const leftShoulder = keypoints.find(kp => kp.name === 'left_shoulder');
 
     if (leftHip && leftKnee && leftAnkle && leftShoulder && 
         leftHip.score > 0.5 && leftKnee.score > 0.5 && leftAnkle.score > 0.5) {
@@ -133,25 +149,103 @@ export const analyzePose = (keypointsData: PoseKeypoint[][]): AnalysisResult => 
   };
 };
 
-// Mock pose detection for demo purposes
-// In production, this would use MediaPipe Pose or similar
-export const detectPoseInVideo = async (videoFile: File): Promise<PoseKeypoint[][]> => {
-  // Simulate processing time
-  await new Promise(resolve => setTimeout(resolve, 2000));
+let poseLandmarker: PoseLandmarker | null = null;
+
+// Initialize MediaPipe Pose
+export const initializePoseLandmarker = async (): Promise<PoseLandmarker> => {
+  if (poseLandmarker) return poseLandmarker;
+
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+  );
+
+  poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`,
+      delegate: "GPU",
+    },
+    runningMode: "VIDEO",
+    numPoses: 1,
+    minPoseDetectionConfidence: 0.5,
+    minPosePresenceConfidence: 0.5,
+    minTrackingConfidence: 0.5,
+  });
+
+  return poseLandmarker;
+};
+
+// Real pose detection using MediaPipe
+export const detectPoseInVideo = async (
+  videoFile: File,
+  onProgress?: (progress: number) => void
+): Promise<PoseKeypoint[][]> => {
+  const landmarker = await initializePoseLandmarker();
   
-  // Generate mock keypoints (in production, use real pose detection)
-  const mockKeypoints: PoseKeypoint[][] = [];
-  const numFrames = 30; // ~2 seconds at 15fps
+  // Create video element
+  const video = document.createElement("video");
+  video.src = URL.createObjectURL(videoFile);
+  video.muted = true;
   
-  for (let i = 0; i < numFrames; i++) {
-    const frame: PoseKeypoint[] = [
-      { x: 0.5, y: 0.2, score: 0.9, name: 'left_shoulder' },
-      { x: 0.5, y: 0.5, score: 0.95, name: 'left_hip' },
-      { x: 0.5 + (Math.random() - 0.5) * 0.1, y: 0.7, score: 0.9, name: 'left_knee' },
-      { x: 0.5, y: 0.9, score: 0.85, name: 'left_ankle' },
-    ];
-    mockKeypoints.push(frame);
-  }
+  await new Promise((resolve) => {
+    video.onloadedmetadata = resolve;
+  });
+
+  const allKeypoints: PoseKeypoint[][] = [];
+  const fps = 15; // Process at 15 fps to save compute
+  const frameDuration = 1000 / fps;
+  const totalFrames = Math.floor((video.duration * fps));
   
-  return mockKeypoints;
+  return new Promise((resolve, reject) => {
+    let currentFrame = 0;
+    
+    video.ontimeupdate = () => {
+      if (video.currentTime >= video.duration) {
+        URL.revokeObjectURL(video.src);
+        resolve(allKeypoints);
+        return;
+      }
+
+      try {
+        const result = landmarker.detectForVideo(video, performance.now());
+        
+        if (result.landmarks && result.landmarks.length > 0) {
+          const landmarks = result.landmarks[0];
+          const frameKeypoints: PoseKeypoint[] = [
+            { x: landmarks[POSE_LANDMARKS.LEFT_SHOULDER].x, y: landmarks[POSE_LANDMARKS.LEFT_SHOULDER].y, z: landmarks[POSE_LANDMARKS.LEFT_SHOULDER].z, score: landmarks[POSE_LANDMARKS.LEFT_SHOULDER].visibility || 1, name: 'left_shoulder' },
+            { x: landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].x, y: landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y, z: landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].z, score: landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].visibility || 1, name: 'right_shoulder' },
+            { x: landmarks[POSE_LANDMARKS.LEFT_HIP].x, y: landmarks[POSE_LANDMARKS.LEFT_HIP].y, z: landmarks[POSE_LANDMARKS.LEFT_HIP].z, score: landmarks[POSE_LANDMARKS.LEFT_HIP].visibility || 1, name: 'left_hip' },
+            { x: landmarks[POSE_LANDMARKS.RIGHT_HIP].x, y: landmarks[POSE_LANDMARKS.RIGHT_HIP].y, z: landmarks[POSE_LANDMARKS.RIGHT_HIP].z, score: landmarks[POSE_LANDMARKS.RIGHT_HIP].visibility || 1, name: 'right_hip' },
+            { x: landmarks[POSE_LANDMARKS.LEFT_KNEE].x, y: landmarks[POSE_LANDMARKS.LEFT_KNEE].y, z: landmarks[POSE_LANDMARKS.LEFT_KNEE].z, score: landmarks[POSE_LANDMARKS.LEFT_KNEE].visibility || 1, name: 'left_knee' },
+            { x: landmarks[POSE_LANDMARKS.RIGHT_KNEE].x, y: landmarks[POSE_LANDMARKS.RIGHT_KNEE].y, z: landmarks[POSE_LANDMARKS.RIGHT_KNEE].z, score: landmarks[POSE_LANDMARKS.RIGHT_KNEE].visibility || 1, name: 'right_knee' },
+            { x: landmarks[POSE_LANDMARKS.LEFT_ANKLE].x, y: landmarks[POSE_LANDMARKS.LEFT_ANKLE].y, z: landmarks[POSE_LANDMARKS.LEFT_ANKLE].z, score: landmarks[POSE_LANDMARKS.LEFT_ANKLE].visibility || 1, name: 'left_ankle' },
+            { x: landmarks[POSE_LANDMARKS.RIGHT_ANKLE].x, y: landmarks[POSE_LANDMARKS.RIGHT_ANKLE].y, z: landmarks[POSE_LANDMARKS.RIGHT_ANKLE].z, score: landmarks[POSE_LANDMARKS.RIGHT_ANKLE].visibility || 1, name: 'right_ankle' },
+            { x: landmarks[POSE_LANDMARKS.LEFT_ELBOW].x, y: landmarks[POSE_LANDMARKS.LEFT_ELBOW].y, z: landmarks[POSE_LANDMARKS.LEFT_ELBOW].z, score: landmarks[POSE_LANDMARKS.LEFT_ELBOW].visibility || 1, name: 'left_elbow' },
+            { x: landmarks[POSE_LANDMARKS.RIGHT_ELBOW].x, y: landmarks[POSE_LANDMARKS.RIGHT_ELBOW].y, z: landmarks[POSE_LANDMARKS.RIGHT_ELBOW].z, score: landmarks[POSE_LANDMARKS.RIGHT_ELBOW].visibility || 1, name: 'right_elbow' },
+          ];
+          
+          allKeypoints.push(frameKeypoints);
+        }
+
+        currentFrame++;
+        if (onProgress) {
+          onProgress(Math.round((currentFrame / totalFrames) * 100));
+        }
+
+        // Move to next frame
+        video.currentTime = Math.min(video.currentTime + (1 / fps), video.duration);
+      } catch (error) {
+        console.error("Error detecting pose:", error);
+        video.currentTime = Math.min(video.currentTime + (1 / fps), video.duration);
+      }
+    };
+
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      reject(new Error("Failed to load video"));
+    };
+
+    // Start processing
+    video.currentTime = 0;
+    video.play().catch(reject);
+  });
 };

@@ -3,9 +3,12 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, TrendingUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { SkeletonVideoPlayer } from "@/components/SkeletonVideoPlayer";
+import { PoseKeypoint } from "@/lib/poseAnalysis";
 
 interface AnalysisResultsProps {
   videoUrl: string;
+  keypointsData: PoseKeypoint[][];
   scores: {
     aiScore: number;
     posture: number;
@@ -16,7 +19,7 @@ interface AnalysisResultsProps {
   onNewAnalysis: () => void;
 }
 
-export const AnalysisResults = ({ videoUrl, scores, feedback, onNewAnalysis }: AnalysisResultsProps) => {
+export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, onNewAnalysis }: AnalysisResultsProps) => {
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600";
     if (score >= 60) return "text-yellow-600";
@@ -34,19 +37,19 @@ export const AnalysisResults = ({ videoUrl, scores, feedback, onNewAnalysis }: A
 
   return (
     <div className="grid lg:grid-cols-2 gap-6 p-6">
-      {/* Video Preview */}
+      {/* Video Preview with Skeleton Overlay */}
       <Card className="overflow-hidden shadow-lg">
         <CardHeader className="bg-gradient-to-r from-primary/10 to-blue-600/10">
           <CardTitle className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-primary" />
-            Analyzed Routine
+            Analyzed Routine with Pose Detection
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <video
-            src={videoUrl}
-            controls
-            className="w-full aspect-video bg-black"
+          <SkeletonVideoPlayer 
+            videoUrl={videoUrl} 
+            keypointsData={keypointsData}
+            className="w-full aspect-video"
           />
         </CardContent>
       </Card>

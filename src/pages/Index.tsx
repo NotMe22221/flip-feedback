@@ -5,7 +5,7 @@ import { AnalysisResults } from "@/components/AnalysisResults";
 import { SessionHistory } from "@/components/SessionHistory";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { detectPoseInVideo, analyzePose } from "@/lib/poseAnalysis";
+import { detectPoseInVideo, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
 import { Upload, BarChart3, History } from "lucide-react";
 
 interface Session {
@@ -23,6 +23,7 @@ const Index = () => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [currentAnalysis, setCurrentAnalysis] = useState<{
     videoUrl: string;
+    keypointsData: PoseKeypoint[][];
     scores: {
       aiScore: number;
       posture: number;
@@ -70,9 +71,11 @@ const Index = () => {
       }
 
       setIsProcessing(true);
-      toast({
+      
+      let progressToast = toast({
         title: "Processing video",
-        description: "Analyzing your routine with AI...",
+        description: "Detecting pose landmarks... 0%",
+        duration: Infinity,
       });
 
       try {
@@ -89,8 +92,21 @@ const Index = () => {
           .from("routine-videos")
           .getPublicUrl(fileName);
 
-        // Detect pose in video
-        const keypointsData = await detectPoseInVideo(file);
+        // Detect pose in video with progress updates
+        const keypointsData = await detectPoseInVideo(file, (progress) => {
+          progressToast.update({
+            id: progressToast.id,
+            title: "Processing video",
+            description: `Detecting pose landmarks... ${progress}%`,
+          });
+        });
+
+        // Update toast for analysis phase
+        progressToast.update({
+          id: progressToast.id,
+          title: "Analyzing performance",
+          description: "Calculating scores and generating feedback...",
+        });
 
         // Analyze pose data
         const analysis = analyzePose(keypointsData);
@@ -119,6 +135,7 @@ const Index = () => {
         // Set current analysis
         setCurrentAnalysis({
           videoUrl: publicUrl,
+          keypointsData,
           scores: {
             aiScore: analysis.aiScore,
             posture: analysis.posture,
@@ -134,12 +151,15 @@ const Index = () => {
         // Switch to results tab
         setActiveTab("results");
 
+        // Dismiss progress toast and show success
+        progressToast.dismiss();
         toast({
           title: "Analysis complete!",
           description: `Your AI score: ${analysis.aiScore}/10`,
         });
       } catch (error) {
         console.error("Error processing video:", error);
+        progressToast?.dismiss();
         toast({
           title: "Processing failed",
           description: "There was an error analyzing your video. Please try again.",
@@ -185,6 +205,7 @@ const Index = () => {
             {currentAnalysis && (
               <AnalysisResults
                 videoUrl={currentAnalysis.videoUrl}
+                keypointsData={currentAnalysis.keypointsData}
                 scores={currentAnalysis.scores}
                 feedback={currentAnalysis.feedback}
                 onNewAnalysis={handleNewAnalysis}
