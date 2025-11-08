@@ -30,26 +30,26 @@ export const UploadSection = ({ onVideoSelect, onImageSelect, isProcessing }: Up
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary to-blue-600 mb-6 shadow-lg">
+      <div className="text-center mb-8 animate-fade-in-up">
+        <div className="inline-flex items-center justify-center w-20 h-20 rounded-full gradient-primary mb-6 glow-blue">
           <Video className="w-10 h-10 text-white" />
         </div>
-        <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+        <h1 className="text-4xl font-bold mb-3 gradient-text">
           FlipCoach AI
         </h1>
-        <p className="text-muted-foreground text-lg max-w-md mx-auto">
+        <p className="text-foreground/70 text-lg max-w-md mx-auto">
           Upload your gymnastics routine and get instant AI-powered analysis and coaching feedback
         </p>
       </div>
 
       <Tabs defaultValue="video" className="max-w-md w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
+        <TabsList className="grid w-full grid-cols-2 mb-4 glass-card">
           <TabsTrigger value="video">Video Upload</TabsTrigger>
           <TabsTrigger value="image">Image Upload</TabsTrigger>
         </TabsList>
 
         <TabsContent value="video">
-          <Card className="p-12 border-2 border-dashed border-primary/30 hover:border-primary/50 transition-all duration-300 w-full bg-gradient-to-br from-background to-primary/5">
+          <Card variant="glass" className="p-12 border-2 border-dashed border-primary/30 hover:border-primary/50 transition-all duration-300 w-full hover:glow-blue">
             <div className="flex flex-col items-center space-y-4">
               <Video className="w-16 h-16 text-primary/60" />
               <div className="text-center">
@@ -60,7 +60,7 @@ export const UploadSection = ({ onVideoSelect, onImageSelect, isProcessing }: Up
                 onClick={() => videoInputRef.current?.click()}
                 disabled={isProcessing}
                 size="lg"
-                className="bg-gradient-to-r from-primary to-blue-600 hover:shadow-lg transition-all duration-300"
+                variant="hero"
               >
                 {isProcessing ? "Processing..." : "Choose Video"}
               </Button>
@@ -76,7 +76,7 @@ export const UploadSection = ({ onVideoSelect, onImageSelect, isProcessing }: Up
         </TabsContent>
 
         <TabsContent value="image">
-          <Card className="p-12 border-2 border-dashed border-primary/30 hover:border-primary/50 transition-all duration-300 w-full bg-gradient-to-br from-background to-primary/5">
+          <Card variant="glass" className="p-12 border-2 border-dashed border-primary/30 hover:border-primary/50 transition-all duration-300 w-full hover:glow-blue">
             <div className="flex flex-col items-center space-y-4">
               <Image className="w-16 h-16 text-primary/60" />
               <div className="text-center">
@@ -87,7 +87,7 @@ export const UploadSection = ({ onVideoSelect, onImageSelect, isProcessing }: Up
                 onClick={() => imageInputRef.current?.click()}
                 disabled={isProcessing}
                 size="lg"
-                className="bg-gradient-to-r from-primary to-blue-600 hover:shadow-lg transition-all duration-300"
+                variant="hero"
               >
                 {isProcessing ? "Processing..." : "Choose Image"}
               </Button>
@@ -109,9 +109,9 @@ export const UploadSection = ({ onVideoSelect, onImageSelect, isProcessing }: Up
           { label: "Landing Stability", icon: "⚖️" },
           { label: "Motion Smoothness", icon: "🌊" },
         ].map((feature) => (
-          <div key={feature.label} className="text-center">
+          <div key={feature.label} className="text-center glass-card p-4 rounded-lg border border-primary/20 hover:border-primary/40 transition-all">
             <div className="text-3xl mb-2">{feature.icon}</div>
-            <p className="text-sm font-medium text-muted-foreground">{feature.label}</p>
+            <p className="text-sm font-medium text-foreground/80">{feature.label}</p>
           </div>
         ))}
       </div>

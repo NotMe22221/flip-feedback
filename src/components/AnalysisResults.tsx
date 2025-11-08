@@ -47,10 +47,10 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, vis
   return (
     <div className="grid lg:grid-cols-2 gap-6 p-6">
       {/* Video/Image Preview with Skeleton Overlay */}
-      <Card className="overflow-hidden shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-primary/10 to-blue-600/10">
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-primary" />
+      <Card variant="glass" className="overflow-hidden border-primary/30">
+        <CardHeader className="gradient-primary">
+          <CardTitle className="flex items-center gap-2 text-white">
+            <Trophy className="w-5 h-5" />
             {isVideo ? 'Analyzed Routine with Pose Detection' : 'Image Analysis with Pose Detection'}
           </CardTitle>
         </CardHeader>
@@ -76,7 +76,7 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, vis
       {/* Scores & Feedback */}
       <div className="space-y-6">
         {/* AI Score */}
-        <Card className="shadow-lg border-2 border-primary/20">
+        <Card variant="glass" className="border-primary/30 glow-blue">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle>AI Performance Score</CardTitle>
@@ -85,7 +85,7 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, vis
           </CardHeader>
           <CardContent>
             <div className="text-center mb-4">
-              <div className="text-6xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+              <div className="text-6xl font-bold gradient-text">
                 {scores.aiScore.toFixed(1)}
               </div>
               <p className="text-sm text-muted-foreground">out of 10</p>
@@ -94,7 +94,7 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, vis
         </Card>
 
         {/* Detailed Metrics */}
-        <Card className="shadow-lg">
+        <Card variant="glass" className="border-primary/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="w-5 h-5 text-primary" />
@@ -124,7 +124,7 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, vis
         </Card>
 
         {/* Feedback */}
-        <Card className="shadow-lg">
+        <Card variant="glass" className="border-primary/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertCircle className="w-5 h-5 text-primary" />
@@ -145,7 +145,7 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, vis
 
         {/* Vision API Results */}
         {visionAnalysis && (
-          <Card className="shadow-lg">
+          <Card variant="glass" className="border-primary/30">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 🔍 Environment Analysis
@@ -183,7 +183,7 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, vis
         {/* Voice Coach */}
         <VoiceCoach scores={scores} feedback={feedback} />
 
-        <Button onClick={onNewAnalysis} className="w-full" size="lg">
+        <Button onClick={onNewAnalysis} variant="hero" className="w-full" size="lg">
           Analyze Another Routine
         </Button>
       </div>

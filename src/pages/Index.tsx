@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { UploadSection } from "@/components/UploadSection";
 import { AnalysisResults } from "@/components/AnalysisResults";
 import { SessionHistory } from "@/components/SessionHistory";
 import { SpeechToText } from "@/components/SpeechToText";
+import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { detectPoseInVideo, detectPoseInImage, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
 import { extractFramesFromVideo, imageToBase64 } from "@/lib/videoFrameExtractor";
-import { Upload, BarChart3, History, Mic } from "lucide-react";
+import { Upload, BarChart3, History, Mic, Activity, LogOut } from "lucide-react";
 
 interface SessionData {
   id: string;
@@ -383,24 +385,33 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background">
-      <div className="container mx-auto py-8 px-4">
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Routine Analysis Coach
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Upload your training videos for AI-powered analysis
-            </p>
-          </div>
-          <Button variant="outline" onClick={handleSignOut}>
-            Sign Out
-          </Button>
-        </div>
+    <div className="min-h-screen relative">
+      <AnimatedBackground />
+      <div className="container mx-auto py-8 px-4 relative z-10">
+        <Card className="glass-strong border-primary/30 mb-8">
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <Activity className="h-10 w-10 text-primary" />
+                <div>
+                  <CardTitle className="text-3xl">
+                    Routine Analysis Coach
+                  </CardTitle>
+                  <p className="text-foreground/70 mt-1">
+                    AI-powered gymnastics analysis and coaching
+                  </p>
+                </div>
+              </div>
+              <Button variant="glass" onClick={handleSignOut} className="gap-2">
+                <LogOut className="w-4 h-4" />
+                Sign Out
+              </Button>
+            </div>
+          </CardHeader>
+        </Card>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8 glass-card">
             <TabsTrigger value="upload" className="gap-2">
               <Upload className="w-4 h-4" />
               Upload
