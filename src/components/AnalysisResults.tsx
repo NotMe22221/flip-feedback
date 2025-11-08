@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, TrendingUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkeletonVideoPlayer } from "@/components/SkeletonVideoPlayer";
+import { VoiceCoach } from "@/components/VoiceCoach";
 import { PoseKeypoint } from "@/lib/poseAnalysis";
 
 interface AnalysisResultsProps {
@@ -123,6 +124,9 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, onN
             </ul>
           </CardContent>
         </Card>
+
+        {/* Voice Coach */}
+        <VoiceCoach scores={scores} feedback={feedback} />
 
         <Button onClick={onNewAnalysis} className="w-full" size="lg">
           Analyze Another Routine
