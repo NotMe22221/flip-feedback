@@ -4,7 +4,7 @@ project_id = "aczvhomywkoshbwbjivd"
 verify_jwt = true
 
 [functions.deepgram-proxy]
-verify_jwt = true
+verify_jwt = false
 
 [functions.analyze-vision]
 verify_jwt = true

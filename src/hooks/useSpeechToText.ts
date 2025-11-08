@@ -36,13 +36,16 @@ export const useSpeechToText = () => {
         audio: {
           channelCount: 1,
           sampleRate: 16000,
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
         } 
       });
       
       streamRef.current = stream;
 
       // Connect to Deepgram via Supabase edge function with auth header
-      const wsUrl = `wss://aczvhomywkoshbwbjivd.supabase.co/functions/v1/deepgram-proxy`;
+      const wsUrl = `wss://aczvhomywkoshbwbjivd.functions.supabase.co/functions/v1/deepgram-proxy`;
       const ws = new WebSocket(wsUrl, ['auth', session.access_token]);
       wsRef.current = ws;
 
@@ -104,6 +107,15 @@ export const useSpeechToText = () => {
 
       ws.onclose = (event) => {
         console.log('WebSocket closed', { code: event.code, reason: event.reason });
+        
+        if (event.code === 1008 || event.reason?.includes('Unauthorized')) {
+          toast({
+            title: 'Authentication Error',
+            description: 'Please sign in again to continue',
+            variant: 'destructive',
+          });
+        }
+        
         setIsRecording(false);
         // Clean up on close
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {

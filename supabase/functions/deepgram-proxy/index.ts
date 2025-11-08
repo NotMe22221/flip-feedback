@@ -79,11 +79,20 @@ serve(async (req) => {
     const deepgramSocket = new WebSocket(deepgramUrl, ["token", DEEPGRAM_API_KEY]);
 
     // Forward messages from client to Deepgram
-    socket.onmessage = (event) => {
+    socket.onmessage = async (event) => {
       try {
-        if (deepgramSocket.readyState === WebSocket.OPEN) {
-          deepgramSocket.send(event.data);
+        if (deepgramSocket.readyState !== WebSocket.OPEN) return;
+        
+        let payload = event.data;
+        
+        // Handle different binary data types
+        if (payload instanceof Blob) {
+          payload = new Uint8Array(await payload.arrayBuffer());
+        } else if (payload instanceof ArrayBuffer) {
+          payload = new Uint8Array(payload);
         }
+        
+        deepgramSocket.send(payload);
       } catch (error) {
         console.error("Error forwarding to Deepgram:", error);
       }
@@ -102,7 +111,11 @@ serve(async (req) => {
 
     // Handle Deepgram connection open
     deepgramSocket.onopen = () => {
-      console.log("Connected to Deepgram API");
+      console.log("Connected to Deepgram API for user:", user.id);
+    };
+    
+    socket.onopen = () => {
+      console.log("Client WebSocket connected for user:", user.id);
     };
 
     // Handle errors
@@ -121,14 +134,14 @@ serve(async (req) => {
 
     // Handle disconnections
     deepgramSocket.onclose = (event) => {
-      console.log("Deepgram connection closed", { code: event.code, reason: event.reason });
+      console.log("Deepgram connection closed for user:", user.id, { code: event.code, reason: event.reason });
       if (socket.readyState === WebSocket.OPEN) {
         socket.close();
       }
     };
 
     socket.onclose = (event) => {
-      console.log("Client connection closed", { code: event.code, reason: event.reason });
+      console.log("Client connection closed for user:", user.id, { code: event.code, reason: event.reason });
       if (deepgramSocket.readyState === WebSocket.OPEN) {
         deepgramSocket.close();
       }
