@@ -1,12 +1,13 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { Navigation } from '@/components/Navigation';
-import { Activity, Brain, Mic, Clock, Upload, Sparkles, Target } from 'lucide-react';
+import { Activity, Brain, Mic, Clock, Upload, Sparkles, Target, Check, X } from 'lucide-react';
 
 export default function Landing() {
+  const navigate = useNavigate();
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
   const stepsRef = useRef<HTMLDivElement>(null);
@@ -214,6 +215,250 @@ export default function Landing() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-20 px-6 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16 fade-in-up">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text">
+              Choose Your Plan
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Start free and scale as you grow. All plans include core features.
+            </p>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid md:grid-cols-3 gap-8 mb-16">
+            {/* Free Tier */}
+            <Card variant="glass" className="p-8 hover:scale-105 transition-transform duration-300">
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold mb-2">Free</h3>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-5xl font-bold gradient-text">$0</span>
+                  <span className="text-muted-foreground ml-2">/month</span>
+                </div>
+                <p className="text-muted-foreground">Perfect for getting started</p>
+              </div>
+              
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>5 video analyses per month</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Basic pose detection</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Session history (7 days)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Mobile & web access</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <X className="w-5 h-5 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">AI coaching feedback</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <X className="w-5 h-5 text-muted-foreground/50 mt-0.5 flex-shrink-0" />
+                  <span className="text-muted-foreground">Voice coach assistant</span>
+                </li>
+              </ul>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate("/auth")}
+              >
+                Get Started
+              </Button>
+            </Card>
+
+            {/* Pro Tier - Highlighted */}
+            <Card variant="glass" className="p-8 border-2 border-primary relative hover:scale-105 transition-transform duration-300">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-blue-400 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                Most Popular
+              </div>
+              
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold mb-2">Pro</h3>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-5xl font-bold gradient-text">$19</span>
+                  <span className="text-muted-foreground ml-2">/month</span>
+                </div>
+                <p className="text-muted-foreground">For serious athletes</p>
+              </div>
+              
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Unlimited video analyses</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Advanced pose detection</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Unlimited session history</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>AI coaching feedback</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Voice coach assistant</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Progress tracking & analytics</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Priority support</span>
+                </li>
+              </ul>
+              
+              <Button 
+                variant="hero" 
+                className="w-full"
+                onClick={() => navigate("/auth")}
+              >
+                Start Pro Trial
+              </Button>
+            </Card>
+
+            {/* Enterprise Tier */}
+            <Card variant="glass" className="p-8 hover:scale-105 transition-transform duration-300">
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold mb-2">Enterprise</h3>
+                <div className="flex items-baseline mb-4">
+                  <span className="text-5xl font-bold gradient-text">Custom</span>
+                </div>
+                <p className="text-muted-foreground">For teams & organizations</p>
+              </div>
+              
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Everything in Pro</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Team management dashboard</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Custom AI training models</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>API access & integrations</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Dedicated account manager</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>SLA & premium support</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Custom deployment options</span>
+                </li>
+              </ul>
+              
+              <Button 
+                variant="outline" 
+                className="w-full"
+              >
+                Contact Sales
+              </Button>
+            </Card>
+          </div>
+
+          {/* Comparison Table */}
+          <div className="fade-in-up">
+            <Card variant="glass" className="p-8">
+              <h3 className="text-2xl font-bold mb-8 text-center">Feature Comparison</h3>
+              
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b border-border/50">
+                      <th className="text-left py-4 px-4 font-semibold">Feature</th>
+                      <th className="text-center py-4 px-4 font-semibold">Free</th>
+                      <th className="text-center py-4 px-4 font-semibold">Pro</th>
+                      <th className="text-center py-4 px-4 font-semibold">Enterprise</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-border/30">
+                      <td className="py-4 px-4">Video Analyses</td>
+                      <td className="text-center py-4 px-4">5/month</td>
+                      <td className="text-center py-4 px-4">Unlimited</td>
+                      <td className="text-center py-4 px-4">Unlimited</td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="py-4 px-4">Pose Detection</td>
+                      <td className="text-center py-4 px-4">Basic</td>
+                      <td className="text-center py-4 px-4">Advanced</td>
+                      <td className="text-center py-4 px-4">Advanced</td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="py-4 px-4">Session History</td>
+                      <td className="text-center py-4 px-4">7 days</td>
+                      <td className="text-center py-4 px-4">Unlimited</td>
+                      <td className="text-center py-4 px-4">Unlimited</td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="py-4 px-4">AI Coaching</td>
+                      <td className="text-center py-4 px-4"><X className="w-5 h-5 mx-auto text-muted-foreground/50" /></td>
+                      <td className="text-center py-4 px-4"><Check className="w-5 h-5 mx-auto text-primary" /></td>
+                      <td className="text-center py-4 px-4"><Check className="w-5 h-5 mx-auto text-primary" /></td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="py-4 px-4">Voice Assistant</td>
+                      <td className="text-center py-4 px-4"><X className="w-5 h-5 mx-auto text-muted-foreground/50" /></td>
+                      <td className="text-center py-4 px-4"><Check className="w-5 h-5 mx-auto text-primary" /></td>
+                      <td className="text-center py-4 px-4"><Check className="w-5 h-5 mx-auto text-primary" /></td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="py-4 px-4">Progress Analytics</td>
+                      <td className="text-center py-4 px-4"><X className="w-5 h-5 mx-auto text-muted-foreground/50" /></td>
+                      <td className="text-center py-4 px-4"><Check className="w-5 h-5 mx-auto text-primary" /></td>
+                      <td className="text-center py-4 px-4"><Check className="w-5 h-5 mx-auto text-primary" /></td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="py-4 px-4">Team Management</td>
+                      <td className="text-center py-4 px-4"><X className="w-5 h-5 mx-auto text-muted-foreground/50" /></td>
+                      <td className="text-center py-4 px-4"><X className="w-5 h-5 mx-auto text-muted-foreground/50" /></td>
+                      <td className="text-center py-4 px-4"><Check className="w-5 h-5 mx-auto text-primary" /></td>
+                    </tr>
+                    <tr className="border-b border-border/30">
+                      <td className="py-4 px-4">API Access</td>
+                      <td className="text-center py-4 px-4"><X className="w-5 h-5 mx-auto text-muted-foreground/50" /></td>
+                      <td className="text-center py-4 px-4"><X className="w-5 h-5 mx-auto text-muted-foreground/50" /></td>
+                      <td className="text-center py-4 px-4"><Check className="w-5 h-5 mx-auto text-primary" /></td>
+                    </tr>
+                    <tr>
+                      <td className="py-4 px-4">Support</td>
+                      <td className="text-center py-4 px-4">Community</td>
+                      <td className="text-center py-4 px-4">Priority</td>
+                      <td className="text-center py-4 px-4">Dedicated</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </Card>
           </div>
         </div>
       </section>
