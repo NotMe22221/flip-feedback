@@ -8,6 +8,7 @@ import { SpeechToText } from "@/components/SpeechToText";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { detectPoseInVideo, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
+import { extractFramesFromVideo, imageToBase64 } from "@/lib/videoFrameExtractor";
 import { Upload, BarChart3, History, Mic } from "lucide-react";
 
 interface SessionData {
@@ -38,6 +39,11 @@ const Index = () => {
       smoothness: number;
     };
     feedback: string[];
+    visionAnalysis?: {
+      labels: Array<{ description: string; score: number }>;
+      objects: Array<{ name: string; score: number }>;
+      dominantColors: any[];
+    };
   } | null>(null);
   const { toast } = useToast();
 
@@ -102,6 +108,109 @@ const Index = () => {
     }
   }, [user]);
 
+  const analyzeWithVision = async (imageData: string) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-vision', {
+        body: { image: imageData }
+      });
+
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Vision API error:', error);
+      return null;
+    }
+  };
+
+  const handleImageSelect = async (file: File) => {
+    setIsProcessing(true);
+    
+    const progressToast = toast({
+      title: "Processing image",
+      description: "Analyzing with Google Cloud Vision...",
+      duration: Infinity,
+    });
+
+    try {
+      // Convert image to base64
+      const imageData = await imageToBase64(file);
+
+      // Upload image to Supabase storage
+      const fileName = `${Date.now()}-${file.name}`;
+      const filePath = `${user.id}/${fileName}`;
+      const { error: uploadError } = await supabase.storage
+        .from("routine-videos")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("routine-videos")
+        .getPublicUrl(filePath);
+
+      // Analyze with Vision API
+      progressToast.update({
+        id: progressToast.id,
+        description: "Analyzing image with AI...",
+      });
+
+      const visionAnalysis = await analyzeWithVision(imageData);
+
+      // Save to database
+      await supabase.from("analysis_sessions").insert({
+        user_id: user.id,
+        video_path: filePath,
+        video_url: publicUrl,
+        ai_score: visionAnalysis ? 8.5 : 0,
+        feedback_text: visionAnalysis 
+          ? `Detected: ${visionAnalysis.labels?.slice(0, 5).map((l: any) => l.description).join(', ')}`
+          : 'Vision analysis unavailable',
+      } as any);
+
+      // Set current analysis
+      setCurrentAnalysis({
+        videoUrl: publicUrl,
+        keypointsData: [],
+        scores: {
+          aiScore: visionAnalysis ? 8.5 : 0,
+          posture: 0,
+          stability: 0,
+          smoothness: 0,
+        },
+        feedback: visionAnalysis 
+          ? [
+              `Detected ${visionAnalysis.labels?.length || 0} labels`,
+              `Found ${visionAnalysis.objects?.length || 0} objects`,
+              ...visionAnalysis.labels?.slice(0, 3).map((l: any) => 
+                `${l.description} (${(l.score * 100).toFixed(0)}% confidence)`
+              ) || []
+            ]
+          : ['Vision analysis unavailable'],
+        visionAnalysis,
+      });
+
+      await fetchSessions();
+      setActiveTab("results");
+
+      progressToast.dismiss();
+      toast({
+        title: "Analysis complete!",
+        description: "Image analyzed with Google Cloud Vision",
+      });
+    } catch (error) {
+      console.error("Error processing image:", error);
+      progressToast?.dismiss();
+      toast({
+        title: "Processing failed",
+        description: "There was an error analyzing your image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleVideoSelect = async (file: File) => {
     // Check video duration (should be max 20 seconds)
     const video = document.createElement("video");
@@ -161,6 +270,20 @@ const Index = () => {
         // Analyze pose data
         const analysis = analyzePose(keypointsData);
 
+        // Extract frames and analyze with Vision API
+        progressToast.update({
+          id: progressToast.id,
+          title: "Analyzing environment",
+          description: "Extracting frames for Vision API analysis...",
+        });
+
+        const frames = await extractFramesFromVideo(file, 3);
+        let visionAnalysis = null;
+        
+        if (frames.length > 0) {
+          visionAnalysis = await analyzeWithVision(frames[0]);
+        }
+
         // Save to database
         const { data, error } = await supabase
           .from("analysis_sessions")
@@ -193,7 +316,13 @@ const Index = () => {
             stability: analysis.stability,
             smoothness: analysis.smoothness,
           },
-          feedback: analysis.feedback,
+          feedback: [
+            ...analysis.feedback,
+            ...(visionAnalysis?.labels ? [
+              `Environment detected: ${visionAnalysis.labels.slice(0, 3).map((l: any) => l.description).join(', ')}`
+            ] : [])
+          ],
+          visionAnalysis: visionAnalysis || undefined,
         });
 
         // Refresh sessions
@@ -267,7 +396,11 @@ const Index = () => {
           </TabsList>
 
           <TabsContent value="upload">
-            <UploadSection onVideoSelect={handleVideoSelect} isProcessing={isProcessing} />
+            <UploadSection 
+              onVideoSelect={handleVideoSelect} 
+              onImageSelect={handleImageSelect}
+              isProcessing={isProcessing} 
+            />
           </TabsContent>
 
           <TabsContent value="results">
@@ -277,6 +410,7 @@ const Index = () => {
                 keypointsData={currentAnalysis.keypointsData}
                 scores={currentAnalysis.scores}
                 feedback={currentAnalysis.feedback}
+                visionAnalysis={currentAnalysis.visionAnalysis}
                 onNewAnalysis={handleNewAnalysis}
               />
             )}

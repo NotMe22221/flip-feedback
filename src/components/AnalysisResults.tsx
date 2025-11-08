@@ -17,10 +17,15 @@ interface AnalysisResultsProps {
     smoothness: number;
   };
   feedback: string[];
+  visionAnalysis?: {
+    labels: Array<{ description: string; score: number }>;
+    objects: Array<{ name: string; score: number }>;
+    dominantColors: any[];
+  };
   onNewAnalysis: () => void;
 }
 
-export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, onNewAnalysis }: AnalysisResultsProps) => {
+export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, visionAnalysis, onNewAnalysis }: AnalysisResultsProps) => {
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600";
     if (score >= 60) return "text-yellow-600";
@@ -124,6 +129,43 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, onN
             </ul>
           </CardContent>
         </Card>
+
+        {/* Vision API Results */}
+        {visionAnalysis && (
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                🔍 Environment Analysis
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {visionAnalysis.labels && visionAnalysis.labels.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Detected Labels:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {visionAnalysis.labels.slice(0, 8).map((label, idx) => (
+                      <Badge key={idx} variant="secondary">
+                        {label.description} ({(label.score * 100).toFixed(0)}%)
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {visionAnalysis.objects && visionAnalysis.objects.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold mb-2">Detected Objects:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {visionAnalysis.objects.map((obj, idx) => (
+                      <Badge key={idx} variant="outline">
+                        {obj.name} ({(obj.score * 100).toFixed(0)}%)
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Voice Coach */}
         <VoiceCoach scores={scores} feedback={feedback} />
