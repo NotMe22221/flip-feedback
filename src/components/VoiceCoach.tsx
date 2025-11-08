@@ -88,7 +88,7 @@ Be conversational, supportive, and knowledgeable. Keep responses concise but hel
     try {
       // Replace with your actual agent ID from ElevenLabs UI
       // Create agent at: https://elevenlabs.io/app/conversational-ai
-      const agentId = "YOUR_AGENT_ID"; 
+      const agentId = "agent_0201k9jbjjp1e53azsch7mwwreqx";
       
       // Get signed URL from backend
       const { data, error } = await supabase.functions.invoke('elevenlabs-signed-url', {
