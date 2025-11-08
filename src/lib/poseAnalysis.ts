@@ -20,18 +20,41 @@ export interface AnalysisResult {
   landingStability: number;
 }
 
-// MediaPipe Pose landmark indices
+// MediaPipe Pose landmark indices - All 33 landmarks
 const POSE_LANDMARKS = {
+  NOSE: 0,
+  LEFT_EYE_INNER: 1,
+  LEFT_EYE: 2,
+  LEFT_EYE_OUTER: 3,
+  RIGHT_EYE_INNER: 4,
+  RIGHT_EYE: 5,
+  RIGHT_EYE_OUTER: 6,
+  LEFT_EAR: 7,
+  RIGHT_EAR: 8,
+  MOUTH_LEFT: 9,
+  MOUTH_RIGHT: 10,
   LEFT_SHOULDER: 11,
   RIGHT_SHOULDER: 12,
+  LEFT_ELBOW: 13,
+  RIGHT_ELBOW: 14,
+  LEFT_WRIST: 15,
+  RIGHT_WRIST: 16,
+  LEFT_PINKY: 17,
+  RIGHT_PINKY: 18,
+  LEFT_INDEX: 19,
+  RIGHT_INDEX: 20,
+  LEFT_THUMB: 21,
+  RIGHT_THUMB: 22,
   LEFT_HIP: 23,
   RIGHT_HIP: 24,
   LEFT_KNEE: 25,
   RIGHT_KNEE: 26,
   LEFT_ANKLE: 27,
   RIGHT_ANKLE: 28,
-  LEFT_ELBOW: 13,
-  RIGHT_ELBOW: 14,
+  LEFT_HEEL: 29,
+  RIGHT_HEEL: 30,
+  LEFT_FOOT_INDEX: 31,
+  RIGHT_FOOT_INDEX: 32,
 };
 
 // Calculate angle between three points
@@ -210,18 +233,14 @@ export const detectPoseInVideo = async (
         
         if (result.landmarks && result.landmarks.length > 0) {
           const landmarks = result.landmarks[0];
-          const frameKeypoints: PoseKeypoint[] = [
-            { x: landmarks[POSE_LANDMARKS.LEFT_SHOULDER].x, y: landmarks[POSE_LANDMARKS.LEFT_SHOULDER].y, z: landmarks[POSE_LANDMARKS.LEFT_SHOULDER].z, score: landmarks[POSE_LANDMARKS.LEFT_SHOULDER].visibility || 1, name: 'left_shoulder' },
-            { x: landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].x, y: landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].y, z: landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].z, score: landmarks[POSE_LANDMARKS.RIGHT_SHOULDER].visibility || 1, name: 'right_shoulder' },
-            { x: landmarks[POSE_LANDMARKS.LEFT_HIP].x, y: landmarks[POSE_LANDMARKS.LEFT_HIP].y, z: landmarks[POSE_LANDMARKS.LEFT_HIP].z, score: landmarks[POSE_LANDMARKS.LEFT_HIP].visibility || 1, name: 'left_hip' },
-            { x: landmarks[POSE_LANDMARKS.RIGHT_HIP].x, y: landmarks[POSE_LANDMARKS.RIGHT_HIP].y, z: landmarks[POSE_LANDMARKS.RIGHT_HIP].z, score: landmarks[POSE_LANDMARKS.RIGHT_HIP].visibility || 1, name: 'right_hip' },
-            { x: landmarks[POSE_LANDMARKS.LEFT_KNEE].x, y: landmarks[POSE_LANDMARKS.LEFT_KNEE].y, z: landmarks[POSE_LANDMARKS.LEFT_KNEE].z, score: landmarks[POSE_LANDMARKS.LEFT_KNEE].visibility || 1, name: 'left_knee' },
-            { x: landmarks[POSE_LANDMARKS.RIGHT_KNEE].x, y: landmarks[POSE_LANDMARKS.RIGHT_KNEE].y, z: landmarks[POSE_LANDMARKS.RIGHT_KNEE].z, score: landmarks[POSE_LANDMARKS.RIGHT_KNEE].visibility || 1, name: 'right_knee' },
-            { x: landmarks[POSE_LANDMARKS.LEFT_ANKLE].x, y: landmarks[POSE_LANDMARKS.LEFT_ANKLE].y, z: landmarks[POSE_LANDMARKS.LEFT_ANKLE].z, score: landmarks[POSE_LANDMARKS.LEFT_ANKLE].visibility || 1, name: 'left_ankle' },
-            { x: landmarks[POSE_LANDMARKS.RIGHT_ANKLE].x, y: landmarks[POSE_LANDMARKS.RIGHT_ANKLE].y, z: landmarks[POSE_LANDMARKS.RIGHT_ANKLE].z, score: landmarks[POSE_LANDMARKS.RIGHT_ANKLE].visibility || 1, name: 'right_ankle' },
-            { x: landmarks[POSE_LANDMARKS.LEFT_ELBOW].x, y: landmarks[POSE_LANDMARKS.LEFT_ELBOW].y, z: landmarks[POSE_LANDMARKS.LEFT_ELBOW].z, score: landmarks[POSE_LANDMARKS.LEFT_ELBOW].visibility || 1, name: 'left_elbow' },
-            { x: landmarks[POSE_LANDMARKS.RIGHT_ELBOW].x, y: landmarks[POSE_LANDMARKS.RIGHT_ELBOW].y, z: landmarks[POSE_LANDMARKS.RIGHT_ELBOW].z, score: landmarks[POSE_LANDMARKS.RIGHT_ELBOW].visibility || 1, name: 'right_elbow' },
-          ];
+          // Extract all 33 landmarks
+          const frameKeypoints: PoseKeypoint[] = Object.entries(POSE_LANDMARKS).map(([name, index]) => ({
+            x: landmarks[index].x,
+            y: landmarks[index].y,
+            z: landmarks[index].z,
+            score: landmarks[index].visibility || 1,
+            name: name.toLowerCase(),
+          }));
           
           allKeypoints.push(frameKeypoints);
         }
@@ -248,4 +267,47 @@ export const detectPoseInVideo = async (
     video.currentTime = 0;
     video.play().catch(reject);
   });
+};
+
+// Detect pose in a static image
+export const detectPoseInImage = async (imageFile: File): Promise<PoseKeypoint[]> => {
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm"
+  );
+
+  const imageLandmarker = await PoseLandmarker.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task`,
+      delegate: "GPU",
+    },
+    runningMode: "IMAGE",
+    numPoses: 1,
+    minPoseDetectionConfidence: 0.5,
+    minPosePresenceConfidence: 0.5,
+  });
+
+  // Create image element
+  const img = document.createElement("img");
+  img.src = URL.createObjectURL(imageFile);
+  
+  await new Promise((resolve) => {
+    img.onload = resolve;
+  });
+
+  const result = imageLandmarker.detect(img);
+  URL.revokeObjectURL(img.src);
+
+  if (result.landmarks && result.landmarks.length > 0) {
+    const landmarks = result.landmarks[0];
+    // Extract all 33 landmarks
+    return Object.entries(POSE_LANDMARKS).map(([name, index]) => ({
+      x: landmarks[index].x,
+      y: landmarks[index].y,
+      z: landmarks[index].z,
+      score: landmarks[index].visibility || 1,
+      name: name.toLowerCase(),
+    }));
+  }
+
+  return [];
 };

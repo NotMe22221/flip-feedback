@@ -1,11 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { PoseKeypoint } from "@/lib/poseAnalysis";
-import { Button } from "@/components/ui/button";
-import { Play, Pause } from "lucide-react";
 
-interface SkeletonVideoPlayerProps {
-  videoUrl: string;
-  keypointsData: PoseKeypoint[][];
+interface SkeletonImageViewerProps {
+  imageUrl: string;
+  keypoints: PoseKeypoint[];
   className?: string;
 }
 
@@ -53,28 +51,24 @@ const POSE_CONNECTIONS = [
   ['right_heel', 'right_foot_index'],
 ];
 
-export const SkeletonVideoPlayer = ({ 
-  videoUrl, 
-  keypointsData,
+export const SkeletonImageViewer = ({ 
+  imageUrl, 
+  keypoints,
   className = "" 
-}: SkeletonVideoPlayerProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+}: SkeletonImageViewerProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const animationFrameRef = useRef<number>();
+  const imageRef = useRef<HTMLImageElement>(null);
 
-  const drawSkeleton = (keypoints: PoseKeypoint[], canvas: HTMLCanvasElement, video: HTMLVideoElement) => {
+  const drawSkeleton = (keypoints: PoseKeypoint[], canvas: HTMLCanvasElement, img: HTMLImageElement) => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear previous drawings
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Set canvas size to match image
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
 
-    // Set canvas size to match video
-    if (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight) {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-    }
+    // Draw the image first
+    ctx.drawImage(img, 0, 0);
 
     // Draw connections (skeleton lines) with confidence-based coloring
     ctx.lineWidth = 4;
@@ -136,93 +130,37 @@ export const SkeletonVideoPlayer = ({
     });
   };
 
-  const updateCanvas = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    
-    if (!video || !canvas || !keypointsData.length) return;
-
-    // Calculate which frame to show based on video time
-    const fps = 15;
-    const frameIndex = Math.floor(video.currentTime * fps);
-    
-    if (frameIndex < keypointsData.length) {
-      drawSkeleton(keypointsData[frameIndex], canvas, video);
-    }
-
-    if (!video.paused && !video.ended) {
-      animationFrameRef.current = requestAnimationFrame(updateCanvas);
-    }
-  };
-
-  const handlePlayPause = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.paused) {
-      video.play();
-      setIsPlaying(true);
-      updateCanvas();
-    } else {
-      video.pause();
-      setIsPlaying(false);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    }
-  };
-
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
+    const canvas = canvasRef.current;
+    const img = imageRef.current;
+    
+    if (!canvas || !img || !keypoints.length) return;
 
-    const handleEnded = () => {
-      setIsPlaying(false);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
+    const handleImageLoad = () => {
+      drawSkeleton(keypoints, canvas, img);
     };
 
-    const handleTimeUpdate = () => {
-      if (!isPlaying) {
-        updateCanvas();
-      }
-    };
-
-    video.addEventListener('ended', handleEnded);
-    video.addEventListener('timeupdate', handleTimeUpdate);
-
-    return () => {
-      video.removeEventListener('ended', handleEnded);
-      video.removeEventListener('timeupdate', handleTimeUpdate);
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [isPlaying, keypointsData]);
+    if (img.complete) {
+      handleImageLoad();
+    } else {
+      img.addEventListener('load', handleImageLoad);
+      return () => img.removeEventListener('load', handleImageLoad);
+    }
+  }, [keypoints, imageUrl]);
 
   return (
     <div className={`relative ${className}`}>
       <div className="relative bg-black rounded-lg overflow-hidden">
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          className="w-full h-full"
-          playsInline
+        <img
+          ref={imageRef}
+          src={imageUrl}
+          alt="Pose analysis"
+          className="hidden"
         />
         <canvas
           ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
+          className="w-full h-full"
         />
-      </div>
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2">
-        <Button
-          onClick={handlePlayPause}
-          size="lg"
-          className="shadow-lg bg-primary/90 hover:bg-primary"
-        >
-          {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-        </Button>
       </div>
     </div>
   );

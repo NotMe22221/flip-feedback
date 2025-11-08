@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trophy, TrendingUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { SkeletonVideoPlayer } from "@/components/SkeletonVideoPlayer";
+import { SkeletonImageViewer } from "@/components/SkeletonImageViewer";
 import { VoiceCoach } from "@/components/VoiceCoach";
 import { PoseKeypoint } from "@/lib/poseAnalysis";
 
@@ -40,23 +41,35 @@ export const AnalysisResults = ({ videoUrl, keypointsData, scores, feedback, vis
   };
 
   const badge = getScoreBadge(scores.aiScore);
+  const isVideo = keypointsData.length > 1;
+  const isImage = keypointsData.length === 1;
 
   return (
     <div className="grid lg:grid-cols-2 gap-6 p-6">
-      {/* Video Preview with Skeleton Overlay */}
+      {/* Video/Image Preview with Skeleton Overlay */}
       <Card className="overflow-hidden shadow-lg">
         <CardHeader className="bg-gradient-to-r from-primary/10 to-blue-600/10">
           <CardTitle className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-primary" />
-            Analyzed Routine with Pose Detection
+            {isVideo ? 'Analyzed Routine with Pose Detection' : 'Image Analysis with Pose Detection'}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <SkeletonVideoPlayer 
-            videoUrl={videoUrl} 
-            keypointsData={keypointsData}
-            className="w-full aspect-video"
-          />
+          {isVideo ? (
+            <SkeletonVideoPlayer 
+              videoUrl={videoUrl} 
+              keypointsData={keypointsData}
+              className="w-full aspect-video"
+            />
+          ) : isImage ? (
+            <SkeletonImageViewer 
+              imageUrl={videoUrl} 
+              keypoints={keypointsData[0]}
+              className="w-full aspect-video"
+            />
+          ) : (
+            <img src={videoUrl} alt="Analysis" className="w-full rounded-lg" />
+          )}
         </CardContent>
       </Card>
 

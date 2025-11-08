@@ -7,7 +7,7 @@ import { SessionHistory } from "@/components/SessionHistory";
 import { SpeechToText } from "@/components/SpeechToText";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { detectPoseInVideo, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
+import { detectPoseInVideo, detectPoseInImage, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
 import { extractFramesFromVideo, imageToBase64 } from "@/lib/videoFrameExtractor";
 import { Upload, BarChart3, History, Mic } from "lucide-react";
 
@@ -127,7 +127,7 @@ const Index = () => {
     
     const progressToast = toast({
       title: "Processing image",
-      description: "Analyzing with Google Cloud Vision...",
+      description: "Detecting pose landmarks...",
       duration: Infinity,
     });
 
@@ -149,44 +149,66 @@ const Index = () => {
         .from("routine-videos")
         .getPublicUrl(filePath);
 
+      // Detect pose in image
+      progressToast.update({
+        id: progressToast.id,
+        description: "Analyzing pose with MediaPipe...",
+      });
+
+      const poseKeypoints = await detectPoseInImage(file);
+
       // Analyze with Vision API
       progressToast.update({
         id: progressToast.id,
-        description: "Analyzing image with AI...",
+        description: "Analyzing scene with Google Cloud Vision...",
       });
 
       const visionAnalysis = await analyzeWithVision(imageData);
+
+      // Analyze pose if detected
+      let poseAnalysis = null;
+      let feedback: string[] = [];
+      
+      if (poseKeypoints.length > 0) {
+        poseAnalysis = analyzePose([poseKeypoints]);
+        feedback = poseAnalysis.feedback;
+      } else {
+        feedback.push("No pose detected in image");
+      }
+
+      // Add vision analysis feedback
+      if (visionAnalysis?.labels) {
+        feedback.push(
+          `Environment: ${visionAnalysis.labels.slice(0, 3).map((l: any) => l.description).join(', ')}`
+        );
+      }
+
+      const aiScore = poseAnalysis ? poseAnalysis.aiScore : (visionAnalysis ? 7.0 : 0);
 
       // Save to database
       await supabase.from("analysis_sessions").insert({
         user_id: user.id,
         video_path: filePath,
         video_url: publicUrl,
-        ai_score: visionAnalysis ? 8.5 : 0,
-        feedback_text: visionAnalysis 
-          ? `Detected: ${visionAnalysis.labels?.slice(0, 5).map((l: any) => l.description).join(', ')}`
-          : 'Vision analysis unavailable',
+        ai_score: aiScore,
+        posture_score: poseAnalysis?.posture || 0,
+        stability_score: poseAnalysis?.stability || 0,
+        smoothness_score: poseAnalysis?.smoothness || 0,
+        feedback_text: feedback.join('\n'),
+        keypoints_data: poseKeypoints.length > 0 ? [poseKeypoints] : [] as any,
       } as any);
 
       // Set current analysis
       setCurrentAnalysis({
         videoUrl: publicUrl,
-        keypointsData: [],
+        keypointsData: poseKeypoints.length > 0 ? [poseKeypoints] : [],
         scores: {
-          aiScore: visionAnalysis ? 8.5 : 0,
-          posture: 0,
-          stability: 0,
-          smoothness: 0,
+          aiScore,
+          posture: poseAnalysis?.posture || 0,
+          stability: poseAnalysis?.stability || 0,
+          smoothness: poseAnalysis?.smoothness || 0,
         },
-        feedback: visionAnalysis 
-          ? [
-              `Detected ${visionAnalysis.labels?.length || 0} labels`,
-              `Found ${visionAnalysis.objects?.length || 0} objects`,
-              ...visionAnalysis.labels?.slice(0, 3).map((l: any) => 
-                `${l.description} (${(l.score * 100).toFixed(0)}% confidence)`
-              ) || []
-            ]
-          : ['Vision analysis unavailable'],
+        feedback,
         visionAnalysis,
       });
 
@@ -196,7 +218,9 @@ const Index = () => {
       progressToast.dismiss();
       toast({
         title: "Analysis complete!",
-        description: "Image analyzed with Google Cloud Vision",
+        description: poseKeypoints.length > 0 
+          ? `Pose detected with ${poseKeypoints.length} landmarks` 
+          : "Image analyzed",
       });
     } catch (error) {
       console.error("Error processing image:", error);
