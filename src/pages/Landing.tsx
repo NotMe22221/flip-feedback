@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AnimatedBackground } from '@/components/AnimatedBackground';
@@ -6,6 +7,51 @@ import { Navigation } from '@/components/Navigation';
 import { Activity, Brain, Mic, Clock, Upload, Sparkles, Target } from 'lucide-react';
 
 export default function Landing() {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const featuresRef = useRef<HTMLDivElement>(null);
+  const stepsRef = useRef<HTMLDivElement>(null);
+  const ctaRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -100px 0px'
+    };
+
+    const observerCallback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate-fade-in-up');
+          entry.target.classList.add('opacity-100');
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    if (featuresRef.current) {
+      const featureCards = featuresRef.current.querySelectorAll('.feature-card');
+      featureCards.forEach((card) => {
+        card.classList.add('opacity-0');
+        observer.observe(card);
+      });
+    }
+
+    if (stepsRef.current) {
+      const stepCards = stepsRef.current.querySelectorAll('.step-card');
+      stepCards.forEach((card) => {
+        card.classList.add('opacity-0');
+        observer.observe(card);
+      });
+    }
+
+    if (ctaRef.current) {
+      ctaRef.current.classList.add('opacity-0');
+      observer.observe(ctaRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
   const features = [
     {
       icon: Activity,
@@ -56,30 +102,30 @@ export default function Landing() {
       <Navigation />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
+      <section ref={heroRef} className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-foreground mb-6 animate-fade-in-up">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 animate-fade-in-up px-4">
             The #1 AI Routine Coach
           </h1>
-          <p className="text-xl sm:text-2xl text-foreground/80 mb-8 max-w-3xl mx-auto animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <p className="text-lg sm:text-xl md:text-2xl text-foreground/80 mb-8 max-w-3xl mx-auto animate-fade-in-up px-4" style={{ animationDelay: '0.1s' }}>
             Transform your gymnastics with AI-powered pose analysis, instant feedback, and personalized coaching
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            <Link to="/auth">
-              <Button size="lg" className="gradient-primary glow-blue text-lg px-8 py-6 h-auto">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up px-4" style={{ animationDelay: '0.2s' }}>
+            <Link to="/auth" className="w-full sm:w-auto">
+              <Button size="lg" className="gradient-primary glow-blue text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 h-auto w-full sm:w-auto">
                 Start Free Trial
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 h-auto border-2 border-primary/50 hover:border-primary hover:bg-primary/10">
+            <Button size="lg" variant="outline" className="text-base sm:text-lg px-6 sm:px-8 py-5 sm:py-6 h-auto w-full sm:w-auto border-2 border-primary/50 hover:border-primary hover:bg-primary/10">
               Watch Demo
             </Button>
           </div>
 
           {/* Hero Image Placeholder */}
-          <div className="mt-16 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-            <div className="glass-card rounded-2xl p-8 max-w-5xl mx-auto glow-blue">
+          <div className="mt-12 sm:mt-16 animate-fade-in-up px-4" style={{ animationDelay: '0.3s' }}>
+            <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto glow-blue">
               <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center">
-                <Activity className="h-32 w-32 text-primary/40" />
+                <Activity className="h-16 w-16 sm:h-24 sm:w-24 lg:h-32 lg:w-32 text-primary/40" />
               </div>
             </div>
           </div>
@@ -87,30 +133,34 @@ export default function Landing() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="relative py-20 px-4 sm:px-6 lg:px-8">
+      <section id="features" ref={featuresRef} className="relative py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               Powerful Features
             </h2>
-            <p className="text-xl text-foreground/80 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-foreground/80 max-w-2xl mx-auto">
               Everything you need to analyze and improve your gymnastics routines
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <Card key={index} className="glass-card border-primary/20 hover:border-primary/40 transition-all hover:glow-blue group">
+                <Card 
+                  key={index} 
+                  className="feature-card glass-card border-primary/20 hover:border-primary/40 transition-all duration-500 hover:glow-blue group hover:scale-105"
+                  style={{ transitionDelay: `${index * 100}ms` }}
+                >
                   <CardHeader>
                     <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4 group-hover:bg-primary/30 transition-colors">
                       <Icon className="h-6 w-6 text-primary" />
                     </div>
-                    <CardTitle className="text-xl">{feature.title}</CardTitle>
+                    <CardTitle className="text-lg sm:text-xl">{feature.title}</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <CardDescription className="text-foreground/70">
+                    <CardDescription className="text-sm sm:text-base text-foreground/70">
                       {feature.description}
                     </CardDescription>
                   </CardContent>
@@ -122,34 +172,37 @@ export default function Landing() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="relative py-20 px-4 sm:px-6 lg:px-8">
+      <section id="how-it-works" ref={stepsRef} className="relative py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl sm:text-5xl font-bold text-foreground mb-4">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">
               How It Works
             </h2>
-            <p className="text-xl text-foreground/80 max-w-2xl mx-auto">
+            <p className="text-lg sm:text-xl text-foreground/80 max-w-2xl mx-auto">
               Get started in three simple steps
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {steps.map((step, index) => {
               const Icon = step.icon;
               return (
                 <div key={index} className="relative">
-                  <Card className="glass-card border-primary/20 h-full">
+                  <Card 
+                    className="step-card glass-card border-primary/20 h-full transition-all duration-500 hover:scale-105 hover:glow-blue"
+                    style={{ transitionDelay: `${index * 150}ms` }}
+                  >
                     <CardHeader>
-                      <div className="text-6xl font-bold gradient-text mb-4">
+                      <div className="text-5xl sm:text-6xl font-bold gradient-text mb-4">
                         {step.number}
                       </div>
                       <div className="h-12 w-12 rounded-lg bg-primary/20 flex items-center justify-center mb-4">
                         <Icon className="h-6 w-6 text-primary" />
                       </div>
-                      <CardTitle className="text-2xl">{step.title}</CardTitle>
+                      <CardTitle className="text-xl sm:text-2xl">{step.title}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <CardDescription className="text-foreground/70 text-base">
+                      <CardDescription className="text-sm sm:text-base text-foreground/70">
                         {step.description}
                       </CardDescription>
                     </CardContent>
@@ -167,23 +220,23 @@ export default function Landing() {
 
       {/* Final CTA Section */}
       <section id="contact" className="relative py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <Card className="glass-strong border-primary/30 glow-blue-strong">
-            <CardHeader className="text-center pb-8">
-              <CardTitle className="text-4xl sm:text-5xl font-bold mb-4">
+        <div className="max-w-4xl mx-auto" ref={ctaRef}>
+          <Card className="glass-strong border-primary/30 glow-blue-strong transition-all duration-500">
+            <CardHeader className="text-center pb-6 sm:pb-8">
+              <CardTitle className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
                 Ready to Improve Your Routine?
               </CardTitle>
-              <CardDescription className="text-xl text-foreground/80">
+              <CardDescription className="text-base sm:text-lg lg:text-xl text-foreground/80">
                 Join athletes using AI to take their performance to the next level
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <Link to="/auth">
-                <Button size="lg" className="gradient-primary glow-blue text-lg px-12 py-6 h-auto">
+                <Button size="lg" className="gradient-primary glow-blue text-base sm:text-lg px-8 sm:px-12 py-5 sm:py-6 h-auto w-full sm:w-auto">
                   Get Started Free
                 </Button>
               </Link>
-              <p className="text-sm text-foreground/60 mt-4">
+              <p className="text-xs sm:text-sm text-foreground/60 mt-4">
                 No credit card required • Free forever
               </p>
             </CardContent>

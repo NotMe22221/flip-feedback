@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface Particle {
   x: number;
@@ -12,6 +12,7 @@ interface Particle {
 
 export const AnimatedBackground = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -50,21 +51,27 @@ export const AnimatedBackground = () => {
       ctx.fillStyle = 'transparent';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+      // Parallax effect based on scroll position
+      const parallaxOffset = scrollY * 0.3;
+
       particles.forEach((particle) => {
         // Twinkling effect
         const twinkle = Math.sin(time * particle.twinkleSpeed + particle.twinkleOffset);
         const currentOpacity = particle.opacity + twinkle * 0.3;
 
+        // Apply parallax offset
+        const parallaxY = particle.y + parallaxOffset;
+
         // Draw particle
         ctx.beginPath();
-        ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        ctx.arc(particle.x, parallaxY, particle.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, Math.min(1, currentOpacity))})`;
         ctx.fill();
 
         // Add subtle blue glow for some particles
         if (particle.size > 1.5) {
           ctx.beginPath();
-          ctx.arc(particle.x, particle.y, particle.size * 2, 0, Math.PI * 2);
+          ctx.arc(particle.x, parallaxY, particle.size * 2, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(59, 130, 246, ${currentOpacity * 0.2})`;
           ctx.fill();
         }
@@ -82,15 +89,21 @@ export const AnimatedBackground = () => {
       animationFrameId = requestAnimationFrame(animate);
     };
 
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     animationFrameId = requestAnimationFrame(animate);
 
     return () => {
       window.removeEventListener('resize', resizeCanvas);
+      window.removeEventListener('scroll', handleScroll);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [scrollY]);
 
   return (
     <canvas
