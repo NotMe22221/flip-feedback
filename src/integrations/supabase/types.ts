@@ -29,6 +29,7 @@ export type Database = {
           smoothness_score: number | null
           stability_score: number | null
           thumbnail_url: string | null
+          video_path: string | null
           video_url: string
         }
         Insert: {
@@ -45,6 +46,7 @@ export type Database = {
           smoothness_score?: number | null
           stability_score?: number | null
           thumbnail_url?: string | null
+          video_path?: string | null
           video_url: string
         }
         Update: {
@@ -61,6 +63,7 @@ export type Database = {
           smoothness_score?: number | null
           stability_score?: number | null
           thumbnail_url?: string | null
+          video_path?: string | null
           video_url?: string
         }
         Relationships: []

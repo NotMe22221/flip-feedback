@@ -76,8 +76,18 @@ const Index = () => {
       });
 
       try {
-        // Create object URL for video display
-        const videoUrl = URL.createObjectURL(file);
+        // Upload video to Supabase storage
+        const fileName = `${Date.now()}-${file.name}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("routine-videos")
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from("routine-videos")
+          .getPublicUrl(fileName);
 
         // Detect pose in video
         const keypointsData = await detectPoseInVideo(file);
@@ -89,7 +99,7 @@ const Index = () => {
         const { data, error } = await supabase
           .from("analysis_sessions")
           .insert({
-            video_url: videoUrl,
+            video_path: fileName,
             duration_seconds: video.duration,
             ai_score: analysis.aiScore,
             posture_score: analysis.posture,
@@ -108,7 +118,7 @@ const Index = () => {
 
         // Set current analysis
         setCurrentAnalysis({
-          videoUrl,
+          videoUrl: publicUrl,
           scores: {
             aiScore: analysis.aiScore,
             posture: analysis.posture,
