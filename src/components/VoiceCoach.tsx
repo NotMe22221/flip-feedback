@@ -55,30 +55,6 @@ ${feedback.map((item, i) => `${i + 1}. ${item}`).join('\n')}
     onMessage: (message) => {
       console.log("Voice coach message:", message);
     },
-    overrides: {
-      agent: {
-        prompt: {
-          prompt: `You are an expert gymnastics coach providing personalized feedback. 
-You have just analyzed a routine and here are the results:
-
-${coachingContext}
-
-Your role:
-- Discuss the performance metrics in an encouraging, constructive way
-- Answer questions about the analysis and scores
-- Provide specific tips for improvement based on the feedback
-- Help the gymnast understand what the scores mean
-- Motivate and guide them toward better performance
-
-Be conversational, supportive, and knowledgeable. Keep responses concise but helpful.`,
-        },
-        firstMessage: `Hey there! I've just finished analyzing your routine and I'm impressed! You scored ${scores.aiScore} out of 10. Want to talk about your performance and how you can improve?`,
-        language: "en",
-      },
-      tts: {
-        voiceId: "9BWtsMINqrJLrRacOk9x", // Aria - professional and clear
-      },
-    },
   });
 
   // Get signed URL for the agent
@@ -117,11 +93,13 @@ Be conversational, supportive, and knowledgeable. Keep responses concise but hel
       }
 
       console.log("Successfully got signed URL, starting conversation...");
-      await conversation.startSession({ 
+      
+      // Start the conversation session with the signed URL
+      const sessionId = await conversation.startSession({ 
         signedUrl: data.signedUrl 
       });
       
-      console.log("Conversation session started successfully");
+      console.log("Conversation session started successfully with ID:", sessionId);
     } catch (error) {
       console.error("=== Voice Coach Initialization Failed ===");
       console.error("Error details:", error);
