@@ -1,8 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { History, TrendingUp, ChevronLeft, ChevronRight } from "lucide-react";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { History, TrendingUp, ChevronLeft, ChevronRight, MessageSquare, ChevronDown } from "lucide-react";
 import { format } from "date-fns";
+import { useState } from "react";
 
 interface Session {
   id: string;
@@ -11,6 +13,7 @@ interface Session {
   posture_score: number | null;
   stability_score: number | null;
   smoothness_score: number | null;
+  voice_notes: string | null;
 }
 
 interface SessionHistoryProps {
@@ -21,6 +24,16 @@ interface SessionHistoryProps {
 }
 
 export const SessionHistory = ({ sessions, currentPage, totalPages, onPageChange }: SessionHistoryProps) => {
+  const [openNotes, setOpenNotes] = useState<string[]>([]);
+
+  const toggleNotes = (sessionId: string) => {
+    setOpenNotes(prev => 
+      prev.includes(sessionId) 
+        ? prev.filter(id => id !== sessionId)
+        : [...prev, sessionId]
+    );
+  };
+
   const getScoreBadge = (score: number) => {
     if (score >= 9) return { label: "Excellent", variant: "default" as const };
     if (score >= 7) return { label: "Good", variant: "secondary" as const };
@@ -84,26 +97,48 @@ export const SessionHistory = ({ sessions, currentPage, totalPages, onPageChange
                         </div>
                         <div className="text-xs text-muted-foreground">Score</div>
                       </div>
-                      <div>
-                        <div className="font-medium mb-1">
-                          {format(new Date(session.created_at), 'MMM d, yyyy')}
-                        </div>
-                        <div className="flex gap-2 text-xs text-muted-foreground">
-                          <span>Posture: {session.posture_score ?? 0}%</span>
-                          <span>•</span>
-                          <span>Stability: {session.stability_score ?? 0}%</span>
-                          <span>•</span>
-                          <span>Smoothness: {session.smoothness_score ?? 0}%</span>
-                        </div>
-                      </div>
+                  <div className="flex-1">
+                    <div className="font-medium mb-1">
+                      {format(new Date(session.created_at), 'MMM d, yyyy')}
                     </div>
-                    <div className="flex items-center gap-3">
-                      {index === 0 && <Badge variant="outline" className="border-primary text-primary">Latest</Badge>}
-                      <Badge variant={badge.variant}>{badge.label}</Badge>
+                    <div className="flex gap-2 text-xs text-muted-foreground">
+                      <span>Posture: {session.posture_score ?? 0}%</span>
+                      <span>•</span>
+                      <span>Stability: {session.stability_score ?? 0}%</span>
+                      <span>•</span>
+                      <span>Smoothness: {session.smoothness_score ?? 0}%</span>
                     </div>
+
+                    {/* Voice Notes Section */}
+                    {session.voice_notes && (
+                      <Collapsible
+                        open={openNotes.includes(session.id)}
+                        onOpenChange={() => toggleNotes(session.id)}
+                        className="mt-3"
+                      >
+                        <CollapsibleTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-8 px-2">
+                            <MessageSquare className="h-3 w-3 mr-1" />
+                            <span className="text-xs">Voice Notes</span>
+                            <ChevronDown className={`h-3 w-3 ml-1 transition-transform ${openNotes.includes(session.id) ? 'rotate-180' : ''}`} />
+                          </Button>
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="mt-2">
+                          <div className="bg-muted/50 rounded-md p-3 text-xs text-muted-foreground">
+                            {session.voice_notes}
+                          </div>
+                        </CollapsibleContent>
+                      </Collapsible>
+                    )}
                   </div>
-                );
-              })}
+                </div>
+                <div className="flex items-center gap-3">
+                  {index === 0 && <Badge variant="outline" className="border-primary text-primary">Latest</Badge>}
+                  <Badge variant={badge.variant}>{badge.label}</Badge>
+                </div>
+              </div>
+            );
+          })}
             </div>
           )}
           

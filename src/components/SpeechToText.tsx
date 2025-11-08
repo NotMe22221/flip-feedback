@@ -44,10 +44,23 @@ export const SpeechToText = ({ onSaveNote }: SpeechToTextProps) => {
     setIsSaving(true);
     
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast({
+          title: 'Error',
+          description: 'You must be logged in to save notes.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Save to database
       const { error } = await supabase
         .from('analysis_sessions')
         .insert({
+          user_id: user.id,
           voice_notes: transcript,
         } as any);
 

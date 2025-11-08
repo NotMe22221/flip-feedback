@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { UploadSection } from "@/components/UploadSection";
 import { AnalysisResults } from "@/components/AnalysisResults";
 import { SessionHistory } from "@/components/SessionHistory";
@@ -9,21 +10,23 @@ import { useToast } from "@/hooks/use-toast";
 import { detectPoseInVideo, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
 import { Upload, BarChart3, History, Mic } from "lucide-react";
 
-interface Session {
+interface SessionData {
   id: string;
   created_at: string;
   ai_score: number | null;
   posture_score: number | null;
   stability_score: number | null;
   smoothness_score: number | null;
+  voice_notes: string | null;
 }
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("upload");
   const [isProcessing, setIsProcessing] = useState(false);
-  const [sessions, setSessions] = useState<Session[]>([]);
+  const [sessions, setSessions] = useState<SessionData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [user, setUser] = useState<any>(null);
   const ITEMS_PER_PAGE = 10;
   const [currentAnalysis, setCurrentAnalysis] = useState<{
     videoUrl: string;
@@ -37,6 +40,29 @@ const Index = () => {
     feedback: string[];
   } | null>(null);
   const { toast } = useToast();
+
+  // Set up auth state
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed out",
+      description: "You have been successfully signed out.",
+    });
+  };
 
   // Fetch session history with pagination
   const fetchSessions = async (page: number = 1) => {
@@ -54,7 +80,7 @@ const Index = () => {
 
     const { data, error } = await supabase
       .from("analysis_sessions")
-      .select("id, created_at, ai_score, posture_score, stability_score, smoothness_score")
+      .select("id, created_at, ai_score, posture_score, stability_score, smoothness_score, voice_notes")
       .order("created_at", { ascending: false })
       .range(from, to);
 
@@ -71,8 +97,10 @@ const Index = () => {
   };
 
   useEffect(() => {
-    fetchSessions(currentPage);
-  }, []);
+    if (user) {
+      fetchSessions(currentPage);
+    }
+  }, [user]);
 
   const handleVideoSelect = async (file: File) => {
     // Check video duration (should be max 20 seconds)
@@ -100,18 +128,19 @@ const Index = () => {
       });
 
       try {
-        // Upload video to Supabase storage
+        // Upload video to Supabase storage with user folder
         const fileName = `${Date.now()}-${file.name}`;
+        const filePath = `${user.id}/${fileName}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
           .from("routine-videos")
-          .upload(fileName, file);
+          .upload(filePath, file);
 
         if (uploadError) throw uploadError;
 
         // Get public URL
         const { data: { publicUrl } } = supabase.storage
           .from("routine-videos")
-          .getPublicUrl(fileName);
+          .getPublicUrl(filePath);
 
         // Detect pose in video with progress updates
         const keypointsData = await detectPoseInVideo(file, (progress) => {
@@ -136,7 +165,8 @@ const Index = () => {
         const { data, error } = await supabase
           .from("analysis_sessions")
           .insert({
-            video_path: fileName,
+            user_id: user.id,
+            video_path: filePath,
             duration_seconds: video.duration,
             ai_score: analysis.aiScore,
             posture_score: analysis.posture,
@@ -201,7 +231,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background">
-      <div className="container mx-auto py-8">
+      <div className="container mx-auto py-8 px-4">
+        <div className="mb-8 flex justify-between items-center">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Routine Analysis Coach
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Upload your training videos for AI-powered analysis
+            </p>
+          </div>
+          <Button variant="outline" onClick={handleSignOut}>
+            Sign Out
+          </Button>
+        </div>
+        
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8">
             <TabsTrigger value="upload" className="gap-2">
