@@ -81,37 +81,38 @@ Be conversational, supportive, and knowledgeable. Keep responses concise but hel
     },
   });
 
-  // Get signed URL for public agent (you'll need to create this in ElevenLabs UI)
+  // Get signed URL for the agent
   const initializeVoiceCoach = async () => {
     setIsInitializing(true);
     
     try {
-      // For public agents, you can use agentId directly
-      // For private agents, get signed URL from your backend
+      // Replace with your actual agent ID from ElevenLabs UI
+      // Create agent at: https://elevenlabs.io/app/conversational-ai
+      const agentId = "YOUR_AGENT_ID"; 
       
-      // Replace with your actual agent ID from ElevenLabs
-      const agentId = "YOUR_AGENT_ID"; // User needs to create this in ElevenLabs UI
-      
-      // Option 1: For public agents (simpler)
-      await conversation.startSession({ agentId });
-      
-      // Option 2: For private agents (more secure)
-      /*
+      // Get signed URL from backend
       const { data, error } = await supabase.functions.invoke('elevenlabs-signed-url', {
         body: { agentId },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Failed to get signed URL:", error);
+        throw new Error("Failed to get signed URL. Make sure you've created an ElevenLabs agent and updated the agentId.");
+      }
       
+      if (!data?.signedUrl) {
+        throw new Error("No signed URL returned from server");
+      }
+
+      console.log("Starting conversation with signed URL");
       await conversation.startSession({ 
-        url: data.signedUrl 
+        signedUrl: data.signedUrl 
       });
-      */
     } catch (error) {
       console.error("Failed to initialize voice coach:", error);
       toast({
-        title: "Initialization Failed",
-        description: "Please set up your ElevenLabs agent first. Check the console for details.",
+        title: "Setup Required",
+        description: error instanceof Error ? error.message : "Please create an ElevenLabs agent first. See ELEVENLABS_SETUP.md for instructions.",
         variant: "destructive",
       });
     } finally {

@@ -53,21 +53,10 @@
 
 4. **Update the Code**
    - Open `src/components/VoiceCoach.tsx`
-   - Find line: `const agentId = "YOUR_AGENT_ID";`
+   - Find line ~88: `const agentId = "YOUR_AGENT_ID";`
    - Replace `YOUR_AGENT_ID` with your actual agent ID
-
-5. **Make Agent Public (Optional)**
-   - In ElevenLabs, go to your agent settings
-   - Toggle "Public Access" to ON
-   - This allows using agentId directly without signed URLs
-
-## Advanced: Using Private Agents
-
-If you want to keep your agent private:
-
-1. Keep "Public Access" OFF in ElevenLabs
-2. Uncomment the "Option 2" code in `VoiceCoach.tsx`
-3. The edge function will generate signed URLs for secure access
+   
+   **Important:** The agent can be public or private - it doesn't matter. The code uses the secure signed URL method which works for both.
 
 ## Testing
 
