@@ -13,19 +13,30 @@ serve(async (req) => {
   }
 
   try {
-    // Verify authentication
-    const authHeader = req.headers.get('Authorization');
-    if (!authHeader) {
+    // Get auth token from WebSocket subprotocol
+    const protocol = req.headers.get('sec-websocket-protocol');
+    let token = '';
+    
+    if (protocol) {
+      const protocols = protocol.split(',').map(p => p.trim());
+      const authIndex = protocols.indexOf('auth');
+      if (authIndex !== -1 && protocols.length > authIndex + 1) {
+        token = protocols[authIndex + 1];
+      }
+    }
+
+    if (!token) {
       return new Response(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized - No token provided' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Verify token
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: authHeader } } }
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
     );
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -55,7 +66,7 @@ serve(async (req) => {
       });
     }
 
-    console.log("Upgrading to WebSocket connection");
+    console.log("Upgrading to WebSocket connection for user:", user.id);
     const { socket, response } = Deno.upgradeWebSocket(req);
 
     // Connect to Deepgram's streaming API with opus encoding

@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TranscriptResult {
   text: string;
@@ -19,6 +20,17 @@ export const useSpeechToText = () => {
 
   const startRecording = useCallback(async () => {
     try {
+      // Get auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: 'Authentication Required',
+          description: 'Please sign in to use speech-to-text',
+          variant: 'destructive',
+        });
+        return;
+      }
+
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ 
         audio: {
@@ -29,9 +41,9 @@ export const useSpeechToText = () => {
       
       streamRef.current = stream;
 
-      // Connect to Deepgram via Supabase edge function
+      // Connect to Deepgram via Supabase edge function with auth header
       const wsUrl = `wss://aczvhomywkoshbwbjivd.supabase.co/functions/v1/deepgram-proxy`;
-      const ws = new WebSocket(wsUrl);
+      const ws = new WebSocket(wsUrl, ['auth', session.access_token]);
       wsRef.current = ws;
 
       ws.onopen = () => {
