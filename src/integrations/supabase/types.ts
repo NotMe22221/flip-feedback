@@ -31,6 +31,7 @@ export type Database = {
           thumbnail_url: string | null
           video_path: string | null
           video_url: string | null
+          voice_notes: string | null
         }
         Insert: {
           ai_score?: number | null
@@ -48,6 +49,7 @@ export type Database = {
           thumbnail_url?: string | null
           video_path?: string | null
           video_url?: string | null
+          voice_notes?: string | null
         }
         Update: {
           ai_score?: number | null
@@ -65,6 +67,7 @@ export type Database = {
           thumbnail_url?: string | null
           video_path?: string | null
           video_url?: string | null
+          voice_notes?: string | null
         }
         Relationships: []
       }

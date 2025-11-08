@@ -3,10 +3,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UploadSection } from "@/components/UploadSection";
 import { AnalysisResults } from "@/components/AnalysisResults";
 import { SessionHistory } from "@/components/SessionHistory";
+import { SpeechToText } from "@/components/SpeechToText";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { detectPoseInVideo, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
-import { Upload, BarChart3, History } from "lucide-react";
+import { Upload, BarChart3, History, Mic } from "lucide-react";
 
 interface Session {
   id: string;
@@ -182,7 +183,7 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background">
       <div className="container mx-auto py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-8">
+          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8">
             <TabsTrigger value="upload" className="gap-2">
               <Upload className="w-4 h-4" />
               Upload
@@ -190,6 +191,10 @@ const Index = () => {
             <TabsTrigger value="results" className="gap-2" disabled={!currentAnalysis}>
               <BarChart3 className="w-4 h-4" />
               Results
+            </TabsTrigger>
+            <TabsTrigger value="notes" className="gap-2">
+              <Mic className="w-4 h-4" />
+              Notes
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <History className="w-4 h-4" />
@@ -211,6 +216,18 @@ const Index = () => {
                 onNewAnalysis={handleNewAnalysis}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="notes">
+            <div className="max-w-2xl mx-auto">
+              <SpeechToText onSaveNote={(note) => {
+                toast({
+                  title: "Note saved",
+                  description: "Your voice note has been saved to the session history",
+                });
+                fetchSessions();
+              }} />
+            </div>
           </TabsContent>
 
           <TabsContent value="history">

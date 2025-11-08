@@ -49,7 +49,7 @@ export const SpeechToText = ({ onSaveNote }: SpeechToTextProps) => {
         .from('analysis_sessions')
         .insert({
           voice_notes: transcript,
-        });
+        } as any);
 
       if (error) throw error;
 
