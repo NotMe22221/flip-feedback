@@ -8,11 +8,23 @@ export const Navigation = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = [
+  const isAppRoute = location.pathname.startsWith('/app');
+
+  const landingLinks = [
     { name: 'Features', href: '#features' },
     { name: 'How It Works', href: '#how-it-works' },
     { name: 'Contact', href: '#contact' },
   ];
+
+  const appLinks = [
+    { name: 'Dashboard', href: '/app' },
+    { name: 'Upload', href: '/app/upload' },
+    { name: 'Training', href: '/app/training' },
+    { name: 'History', href: '/app/history' },
+    { name: 'Notes', href: '/app/notes' },
+  ];
+
+  const navLinks = isAppRoute ? appLinks : landingLinks;
 
   const scrollToSection = (href: string) => {
     if (href.startsWith('#')) {
@@ -21,6 +33,14 @@ export const Navigation = () => {
         element.scrollIntoView({ behavior: 'smooth' });
         setMobileMenuOpen(false);
       }
+    }
+  };
+
+  const handleNavClick = (link: { name: string; href: string }) => {
+    if (link.href.startsWith('#')) {
+      scrollToSection(link.href);
+    } else {
+      setMobileMenuOpen(false);
     }
   };
 
@@ -37,14 +57,25 @@ export const Navigation = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <button
-                key={link.name}
-                onClick={() => scrollToSection(link.href)}
-                className="text-foreground/80 hover:text-foreground transition-colors relative group"
-              >
-                {link.name}
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
-              </button>
+              link.href.startsWith('#') ? (
+                <button
+                  key={link.name}
+                  onClick={() => scrollToSection(link.href)}
+                  className="text-foreground/80 hover:text-foreground transition-colors relative group"
+                >
+                  {link.name}
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                </button>
+              ) : (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  className="text-foreground/80 hover:text-foreground transition-colors relative group"
+                >
+                  {link.name}
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all group-hover:w-full"></span>
+                </Link>
+              )
             ))}
           </div>
 
@@ -73,13 +104,24 @@ export const Navigation = () => {
         <div className="md:hidden glass-strong border-t border-primary/20">
           <div className="px-4 py-4 space-y-3">
             {navLinks.map((link) => (
-              <button
-                key={link.name}
-                onClick={() => scrollToSection(link.href)}
-                className="block w-full text-left text-foreground/80 hover:text-foreground py-2"
-              >
-                {link.name}
-              </button>
+              link.href.startsWith('#') ? (
+                <button
+                  key={link.name}
+                  onClick={() => scrollToSection(link.href)}
+                  className="block w-full text-left text-foreground/80 hover:text-foreground py-2"
+                >
+                  {link.name}
+                </button>
+              ) : (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full text-left text-foreground/80 hover:text-foreground py-2"
+                >
+                  {link.name}
+                </Link>
+              )
             ))}
             <div className="pt-4 space-y-2">
               <Link to="/auth" className="block" onClick={() => setMobileMenuOpen(false)}>

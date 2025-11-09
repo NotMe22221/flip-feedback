@@ -6,7 +6,13 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
-import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Upload from "./pages/Upload";
+import Results from "./pages/Results";
+import Training from "./pages/Training";
+import Notes from "./pages/Notes";
+import History from "./pages/History";
+import BatchProgress from "./pages/BatchProgress";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
 import BillingHistory from "./pages/BillingHistory";
@@ -64,7 +70,37 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/app" element={
               <ProtectedRoute>
-                <Index />
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/upload" element={
+              <ProtectedRoute>
+                <Upload />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/results" element={
+              <ProtectedRoute>
+                <Results />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/training" element={
+              <ProtectedRoute>
+                <Training />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/notes" element={
+              <ProtectedRoute>
+                <Notes />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/history" element={
+              <ProtectedRoute>
+                <History />
+              </ProtectedRoute>
+            } />
+            <Route path="/app/batch" element={
+              <ProtectedRoute>
+                <BatchProgress />
               </ProtectedRoute>
             } />
             <Route path="/billing" element={
