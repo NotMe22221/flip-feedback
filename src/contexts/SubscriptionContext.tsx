@@ -48,6 +48,15 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Skip subscription check for anonymous users or users without email
+      if (!session.user?.email) {
+        setSubscribed(false);
+        setProductId(null);
+        setSubscriptionEnd(null);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke('check-subscription');
       
       if (error) {
@@ -60,11 +69,14 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       setSubscriptionEnd(data.subscription_end || null);
     } catch (error) {
       console.error('Error refreshing subscription:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to check subscription status',
-        variant: 'destructive',
-      });
+      // Don't show error toast for anonymous users
+      if (error instanceof Error && !error.message.includes('anonymous')) {
+        toast({
+          title: 'Error',
+          description: 'Failed to check subscription status',
+          variant: 'destructive',
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -73,10 +85,10 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const createCheckout = async (priceId: string) => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
+      if (!session || !session.user?.email) {
         toast({
           title: 'Authentication Required',
-          description: 'Please sign in to subscribe',
+          description: 'Please sign in with an email account to subscribe',
           variant: 'destructive',
         });
         return;
