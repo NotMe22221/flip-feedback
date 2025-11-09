@@ -8,7 +8,7 @@ export const Navigation = () => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isAppRoute = location.pathname.startsWith('/app');
+  const isAppRoute = location.pathname.startsWith('/app') || location.pathname.startsWith('/subscription') || location.pathname.startsWith('/billing');
 
   const landingLinks = [
     { name: 'Features', href: '#features' },

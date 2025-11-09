@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { Navigation } from "@/components/Navigation";
+import { SubscriptionMetrics } from "@/components/SubscriptionMetrics";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, BarChart3, History, Mic, Target, Activity, LogOut, Receipt, TrendingUp } from "lucide-react";
@@ -151,6 +152,9 @@ const Index = () => {
             </div>
           </CardHeader>
         </Card>
+
+        {/* Subscription Metrics */}
+        <SubscriptionMetrics />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
