@@ -31,24 +31,28 @@ serve(async (req) => {
     logStep("Stripe key verified");
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) throw new Error("No authorization header provided");
+    if (!authHeader) {
+      logStep("No authorization header, returning unsubscribed state");
+      return new Response(JSON.stringify({ subscribed: false }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
     logStep("Authorization header found");
 
     const token = authHeader.replace("Bearer ", "");
     logStep("Authenticating user with token");
     
     const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
-    if (userError) throw new Error(`Authentication error: ${userError.message}`);
-    const user = userData.user;
-    
-    // Handle anonymous users or users without email gracefully
-    if (!user || !user.email) {
-      logStep("User is anonymous or has no email, returning unsubscribed state");
+    if (userError || !userData.user || !userData.user.email) {
+      logStep("User is not authenticated or has no email, returning unsubscribed state", { error: userError?.message });
       return new Response(JSON.stringify({ subscribed: false }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
     }
+    
+    const user = userData.user;
     
     logStep("User authenticated", { userId: user.id, email: user.email });
 
