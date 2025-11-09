@@ -16,6 +16,7 @@ import BatchProgress from "./pages/BatchProgress";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
 import BillingHistory from "./pages/BillingHistory";
+import Subscription from "./pages/Subscription";
 import NotFound from "./pages/NotFound";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 
@@ -108,6 +109,7 @@ const App = () => (
                 <BillingHistory />
               </ProtectedRoute>
             } />
+            <Route path="/subscription" element={<Subscription />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

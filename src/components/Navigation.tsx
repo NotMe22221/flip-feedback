@@ -22,6 +22,7 @@ export const Navigation = () => {
     { name: 'Training', href: '/app/training' },
     { name: 'History', href: '/app/history' },
     { name: 'Notes', href: '/app/notes' },
+    { name: 'Subscription', href: '/subscription' },
   ];
 
   const navLinks = isAppRoute ? appLinks : landingLinks;
