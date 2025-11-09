@@ -133,6 +133,31 @@ const Auth = () => {
     }
   };
 
+  const handleGuestSignIn = async () => {
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.signInAnonymously();
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome!",
+        description: "You're now using the app as a guest.",
+      });
+      
+      navigate("/app");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const features = [
     { icon: Activity, text: "33-landmark pose detection" },
     { icon: Brain, text: "AI-powered performance scoring" },
@@ -269,6 +294,26 @@ const Auth = () => {
                 </form>
               </TabsContent>
             </Tabs>
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border/50" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or</span>
+                </div>
+              </div>
+              
+              <Button
+                variant="outline"
+                className="w-full mt-4 border-primary/30 hover:border-primary hover:bg-primary/10"
+                onClick={handleGuestSignIn}
+                disabled={loading}
+              >
+                {loading ? "Signing in..." : "Continue as Guest"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
