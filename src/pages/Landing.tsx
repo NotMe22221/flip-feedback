@@ -122,11 +122,17 @@ export default function Landing() {
             </Button>
           </div>
 
-          {/* Hero Image Placeholder */}
+          {/* Demo Video */}
           <div className="mt-12 sm:mt-16 animate-fade-in-up px-4" style={{ animationDelay: '0.3s' }}>
             <div className="glass-card rounded-xl sm:rounded-2xl p-4 sm:p-6 lg:p-8 max-w-5xl mx-auto glow-blue">
-              <div className="aspect-video bg-gradient-to-br from-primary/20 to-secondary/20 rounded-lg flex items-center justify-center">
-                <Activity className="h-16 w-16 sm:h-24 sm:w-24 lg:h-32 lg:w-32 text-primary/40" />
+              <div className="aspect-video rounded-lg overflow-hidden">
+                <iframe
+                  src="https://www.loom.com/embed/f2cd374e502d4caf8890c65b424b3b4e?sid=5e2e3b8a-3a9e-4f7f-8c9a-1b3f8e5a9c2d"
+                  frameBorder="0"
+                  allowFullScreen
+                  className="w-full h-full"
+                  title="AI Routine Coach Demo"
+                />
               </div>
             </div>
           </div>
