@@ -118,6 +118,44 @@ export type Database = {
         }
         Relationships: []
       }
+      plan_shares: {
+        Row: {
+          accepted: boolean | null
+          created_at: string
+          id: string
+          permission_level: string
+          plan_id: string
+          shared_by: string
+          shared_with_email: string
+        }
+        Insert: {
+          accepted?: boolean | null
+          created_at?: string
+          id?: string
+          permission_level?: string
+          plan_id: string
+          shared_by: string
+          shared_with_email: string
+        }
+        Update: {
+          accepted?: boolean | null
+          created_at?: string
+          id?: string
+          permission_level?: string
+          plan_id?: string
+          shared_by?: string
+          shared_with_email?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plan_shares_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       training_goals: {
         Row: {
           completed_at: string | null

@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Target, TrendingUp, Award, Plus, Sparkles, Calendar, CheckCircle2 } from "lucide-react";
+import { Target, TrendingUp, Award, Plus, Sparkles, Calendar, CheckCircle2, Users } from "lucide-react";
 import { CreatePlanDialog } from "@/components/CreatePlanDialog";
 import { CreateGoalDialog } from "@/components/CreateGoalDialog";
+import { SharePlanDialog } from "@/components/SharePlanDialog";
 import { format } from "date-fns";
 
 interface TrainingPlan {
@@ -56,6 +57,7 @@ export const TrainingPlanDashboard = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [showCreatePlan, setShowCreatePlan] = useState(false);
   const [showCreateGoal, setShowCreateGoal] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -241,10 +243,16 @@ export const TrainingPlanDashboard = () => {
                 )}
               </div>
             </div>
-            <Button onClick={() => setShowCreateGoal(true)} variant="hero">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Goal
-            </Button>
+            <div className="flex gap-2">
+              <Button onClick={() => setShowShareDialog(true)} variant="outline" className="gap-2">
+                <Users className="w-4 h-4" />
+                Share
+              </Button>
+              <Button onClick={() => setShowCreateGoal(true)} variant="hero">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Goal
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -415,6 +423,13 @@ export const TrainingPlanDashboard = () => {
         onOpenChange={setShowCreateGoal}
         planId={activePlan.id}
         onCreated={fetchGoals}
+      />
+
+      <SharePlanDialog
+        open={showShareDialog}
+        onOpenChange={setShowShareDialog}
+        planId={activePlan.id}
+        planName={activePlan.name}
       />
     </div>
   );
