@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { detectPoseInVideo, detectPoseInImage, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
 import { extractFramesFromVideo, imageToBase64 } from "@/lib/videoFrameExtractor";
-import { Upload, BarChart3, History, Mic, Activity, LogOut, Target } from "lucide-react";
+import { Upload, BarChart3, History, Mic, Activity, LogOut, Target, Receipt } from "lucide-react";
 
 interface SessionData {
   id: string;
@@ -27,6 +28,7 @@ interface SessionData {
 }
 
 const Index = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("upload");
   const [isProcessing, setIsProcessing] = useState(false);
   const [sessions, setSessions] = useState<SessionData[]>([]);
@@ -610,10 +612,16 @@ const Index = () => {
                   </p>
                 </div>
               </div>
-              <Button variant="glass" onClick={handleSignOut} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                Sign Out
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="ghost" onClick={() => navigate('/billing')} className="gap-2">
+                  <Receipt className="w-4 h-4" />
+                  Billing
+                </Button>
+                <Button variant="glass" onClick={handleSignOut} className="gap-2">
+                  <LogOut className="w-4 h-4" />
+                  Sign Out
+                </Button>
+              </div>
             </div>
           </CardHeader>
         </Card>

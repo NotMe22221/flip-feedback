@@ -23,3 +23,6 @@ verify_jwt = true
 
 [functions.customer-portal]
 verify_jwt = true
+
+[functions.billing-history]
+verify_jwt = true

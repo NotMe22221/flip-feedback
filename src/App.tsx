@@ -9,6 +9,7 @@ import { Session } from "@supabase/supabase-js";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
+import BillingHistory from "./pages/BillingHistory";
 import NotFound from "./pages/NotFound";
 import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 
@@ -64,6 +65,11 @@ const App = () => (
             <Route path="/app" element={
               <ProtectedRoute>
                 <Index />
+              </ProtectedRoute>
+            } />
+            <Route path="/billing" element={
+              <ProtectedRoute>
+                <BillingHistory />
               </ProtectedRoute>
             } />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
