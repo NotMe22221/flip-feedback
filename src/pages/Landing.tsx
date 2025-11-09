@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AnimatedBackground } from '@/components/AnimatedBackground';
 import { Navigation } from '@/components/Navigation';
 import { Activity, Brain, Mic, Clock, Upload, Sparkles, Target, Check, X } from 'lucide-react';
+import { useSubscription, SUBSCRIPTION_TIERS } from '@/contexts/SubscriptionContext';
 
 export default function Landing() {
   const navigate = useNavigate();
+  const { createCheckout } = useSubscription();
   const heroRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<HTMLDivElement>(null);
   const stepsRef = useRef<HTMLDivElement>(null);
@@ -295,7 +297,7 @@ export default function Landing() {
               <div className="mb-6">
                 <h3 className="text-2xl font-bold mb-2">Pro</h3>
                 <div className="flex items-baseline mb-4">
-                  <span className="text-5xl font-bold gradient-text">$19</span>
+                  <span className="text-5xl font-bold gradient-text">$29</span>
                   <span className="text-muted-foreground ml-2">/month</span>
                 </div>
                 <p className="text-muted-foreground">For serious athletes</p>
@@ -335,9 +337,9 @@ export default function Landing() {
               <Button 
                 variant="hero" 
                 className="w-full"
-                onClick={() => navigate("/auth")}
+                onClick={() => createCheckout(SUBSCRIPTION_TIERS.pro.price_id)}
               >
-                Start Pro Trial
+                Subscribe to Pro
               </Button>
             </Card>
 
