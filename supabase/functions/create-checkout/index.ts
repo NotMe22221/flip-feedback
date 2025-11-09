@@ -54,8 +54,11 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/app`,
-      cancel_url: `${req.headers.get("origin")}/`,
+      subscription_data: {
+        trial_period_days: 14,
+      },
+      success_url: `${req.headers.get("origin")}/subscription?success=true`,
+      cancel_url: `${req.headers.get("origin")}/subscription?canceled=true`,
     });
 
     logStep("Checkout session created", { sessionId: session.id });

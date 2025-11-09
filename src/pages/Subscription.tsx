@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSubscription } from "@/contexts/SubscriptionContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,13 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Check, Crown, Zap, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Navigation } from "@/components/Navigation";
+import { useSearchParams } from "react-router-dom";
 
 const tiers = [
   {
     name: "Pro",
     price: "$29",
     period: "month",
-    description: "Perfect for individual athletes and coaches",
+    description: "14-day free trial, then $29/month",
     productId: "prod_RlKN6kh1xTyDZN",
     priceId: "price_1QsLwPRqbfnxgpN5Fx1Y0Qnz",
     features: [
@@ -29,7 +30,7 @@ const tiers = [
     name: "Enterprise",
     price: "$99",
     period: "month",
-    description: "For teams and professional coaches",
+    description: "14-day free trial, then $99/month",
     productId: "prod_RlKODHu6DHb4hS",
     priceId: "price_1QsLxXRqbfnxgpN5o37DuJ5n",
     features: [
@@ -46,9 +47,24 @@ const tiers = [
 ];
 
 export default function Subscription() {
-  const { subscribed, productId, subscriptionEnd, loading, createCheckout, openCustomerPortal, refreshSubscription } = useSubscription();
+  const { subscribed, productId, subscriptionEnd, trialEnd, trialActive, loading, createCheckout, openCustomerPortal, refreshSubscription } = useSubscription();
   const [processingPriceId, setProcessingPriceId] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+
+    if (success === 'true') {
+      toast.success("Subscription started! Your 14-day free trial has begun.");
+      refreshSubscription();
+      setSearchParams({});
+    } else if (canceled === 'true') {
+      toast.error("Checkout canceled. No charges were made.");
+      setSearchParams({});
+    }
+  }, [searchParams, refreshSubscription, setSearchParams]);
 
   const handleSubscribe = async (priceId: string) => {
     setProcessingPriceId(priceId);
@@ -101,15 +117,26 @@ export default function Subscription() {
           </p>
           
           {subscribed && (
-            <div className="mt-6 flex items-center justify-center gap-4">
-              <Badge variant="secondary" className="text-base px-4 py-2">
-                Active Subscription
-                {subscriptionEnd && (
-                  <span className="ml-2 text-xs opacity-70">
-                    Until {new Date(subscriptionEnd).toLocaleDateString()}
-                  </span>
-                )}
-              </Badge>
+            <div className="mt-6 flex items-center justify-center gap-4 flex-wrap">
+              {trialActive ? (
+                <Badge variant="default" className="text-base px-4 py-2 bg-gradient-primary">
+                  Free Trial Active
+                  {trialEnd && (
+                    <span className="ml-2 text-xs opacity-90">
+                      Ends {new Date(trialEnd).toLocaleDateString()}
+                    </span>
+                  )}
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="text-base px-4 py-2">
+                  Active Subscription
+                  {subscriptionEnd && (
+                    <span className="ml-2 text-xs opacity-70">
+                      Until {new Date(subscriptionEnd).toLocaleDateString()}
+                    </span>
+                  )}
+                </Badge>
+              )}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -157,6 +184,9 @@ export default function Subscription() {
                   <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
                     <Icon className="w-6 h-6 text-primary" />
                   </div>
+                  <Badge variant="outline" className="mx-auto mb-3 bg-gradient-primary/10 border-primary/20">
+                    🎉 14-Day Free Trial
+                  </Badge>
                   <CardTitle className="text-2xl mb-2">{tier.name}</CardTitle>
                   <CardDescription>{tier.description}</CardDescription>
                   <div className="mt-4">
@@ -232,7 +262,8 @@ export default function Subscription() {
 
         {/* FAQ or Additional Info */}
         <div className="mt-16 text-center text-sm text-muted-foreground">
-          <p>All plans include a 14-day money-back guarantee</p>
+          <p>Start your 14-day free trial today - no credit card required during trial</p>
+          <p className="mt-2">Cancel anytime during your trial without being charged</p>
           <p className="mt-2">Need help choosing? Contact us at support@flipcoach.ai</p>
         </div>
       </div>

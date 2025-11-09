@@ -74,11 +74,15 @@ serve(async (req) => {
     const hasActiveSub = subscriptions.data.length > 0;
     let productId = null;
     let subscriptionEnd = null;
+    let trialEnd = null;
+    let trialActive = false;
 
     if (hasActiveSub) {
       const subscription = subscriptions.data[0];
       subscriptionEnd = new Date(subscription.current_period_end * 1000).toISOString();
-      logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd });
+      trialActive = subscription.status === "trialing";
+      trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null;
+      logStep("Active subscription found", { subscriptionId: subscription.id, endDate: subscriptionEnd, trialActive, trialEnd });
       productId = subscription.items.data[0].price.product;
       logStep("Determined subscription tier", { productId });
     } else {
@@ -88,7 +92,9 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       subscribed: hasActiveSub,
       product_id: productId,
-      subscription_end: subscriptionEnd
+      subscription_end: subscriptionEnd,
+      trial_end: trialEnd,
+      trial_active: trialActive
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

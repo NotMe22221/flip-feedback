@@ -22,6 +22,8 @@ interface SubscriptionContextType {
   subscribed: boolean;
   productId: string | null;
   subscriptionEnd: string | null;
+  trialEnd: string | null;
+  trialActive: boolean;
   loading: boolean;
   refreshSubscription: () => Promise<void>;
   createCheckout: (priceId: string) => Promise<void>;
@@ -34,6 +36,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [subscribed, setSubscribed] = useState(false);
   const [productId, setProductId] = useState<string | null>(null);
   const [subscriptionEnd, setSubscriptionEnd] = useState<string | null>(null);
+  const [trialEnd, setTrialEnd] = useState<string | null>(null);
+  const [trialActive, setTrialActive] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -44,6 +48,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         setSubscribed(false);
         setProductId(null);
         setSubscriptionEnd(null);
+        setTrialEnd(null);
+        setTrialActive(false);
         setLoading(false);
         return;
       }
@@ -53,6 +59,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         setSubscribed(false);
         setProductId(null);
         setSubscriptionEnd(null);
+        setTrialEnd(null);
+        setTrialActive(false);
         setLoading(false);
         return;
       }
@@ -67,6 +75,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
       setSubscribed(data.subscribed || false);
       setProductId(data.product_id || null);
       setSubscriptionEnd(data.subscription_end || null);
+      setTrialEnd(data.trial_end || null);
+      setTrialActive(data.trial_active || false);
     } catch (error) {
       console.error('Error refreshing subscription:', error);
       // Don't show error toast for anonymous users
@@ -142,6 +152,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         setSubscribed(false);
         setProductId(null);
         setSubscriptionEnd(null);
+        setTrialEnd(null);
+        setTrialActive(false);
       }
     });
 
@@ -160,6 +172,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
         subscribed,
         productId,
         subscriptionEnd,
+        trialEnd,
+        trialActive,
         loading,
         refreshSubscription,
         createCheckout,
