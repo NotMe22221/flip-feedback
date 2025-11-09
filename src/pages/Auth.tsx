@@ -68,7 +68,7 @@ const Auth = () => {
     try {
       const redirectUrl = `${window.location.origin}/app`;
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -78,16 +78,36 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Success!",
-        description: "Please check your email to confirm your account.",
-      });
+      // Check if email confirmation is required
+      if (data?.user && !data.session) {
+        // Email confirmation is enabled - user needs to check email
+        toast({
+          title: "Success!",
+          description: "Please check your email to confirm your account.",
+        });
+      } else if (data?.session) {
+        // Email confirmation is disabled - user is automatically logged in
+        toast({
+          title: "Account created!",
+          description: "Welcome to FlipCoach AI.",
+        });
+        navigate("/app");
+      }
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Handle specific error cases
+      if (error.message?.includes("already registered")) {
+        toast({
+          title: "Account exists",
+          description: "This email is already registered. Please sign in instead.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to create account. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
