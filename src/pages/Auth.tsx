@@ -9,8 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { Session } from "@supabase/supabase-js";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
-import { Activity, Brain, Mic, Clock } from "lucide-react";
+import { Brain, Mic, Clock } from "lucide-react";
 import { z } from "zod";
+import logo from '@/assets/flipcoach-logo.jpg';
 
 const authSchema = z.object({
   email: z.string().email('Invalid email address').max(255, 'Email too long'),
@@ -159,7 +160,7 @@ const Auth = () => {
   };
 
   const features = [
-    { icon: Activity, text: "33-landmark pose detection" },
+    { icon: Brain, text: "33-landmark pose detection" },
     { icon: Brain, text: "AI-powered performance scoring" },
     { icon: Mic, text: "Interactive voice coaching" },
     { icon: Clock, text: "Comprehensive session tracking" },
@@ -174,8 +175,8 @@ const Auth = () => {
         <div className="max-w-md space-y-8 relative z-10">
           <div>
             <div className="flex items-center gap-3 mb-6">
-              <Activity className="h-10 w-10 text-primary" />
-              <h1 className="text-3xl font-bold text-foreground">Routine Coach</h1>
+              <img src={logo} alt="FlipCoach AI" className="h-12 w-12 object-contain" />
+              <h1 className="text-3xl font-bold text-foreground">FlipCoach AI</h1>
             </div>
             <h2 className="text-4xl font-bold text-foreground mb-4">
               Welcome to the Future of Gymnastics Training
@@ -206,8 +207,8 @@ const Auth = () => {
         <Card className="w-full max-w-md glass-strong border-primary/30">
           <CardHeader className="text-center">
             <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
-              <Activity className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold">Routine Coach</span>
+              <img src={logo} alt="FlipCoach AI" className="h-10 w-10 object-contain" />
+              <span className="text-2xl font-bold">FlipCoach AI</span>
             </div>
             <CardTitle className="text-2xl">Get Started</CardTitle>
             <CardDescription>

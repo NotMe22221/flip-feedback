@@ -106,7 +106,7 @@ export default function Landing() {
       <section ref={heroRef} className="relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto text-center">
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 animate-fade-in-up px-4">
-            The #1 AI Routine Coach
+            FlipCoach AI
           </h1>
           <p className="text-lg sm:text-xl md:text-2xl text-foreground/80 mb-8 max-w-3xl mx-auto animate-fade-in-up px-4" style={{ animationDelay: '0.1s' }}>
             Transform your gymnastics with AI-powered pose analysis, instant feedback, and personalized coaching

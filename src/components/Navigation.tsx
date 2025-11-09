@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Activity, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useState } from 'react';
+import logo from '@/assets/flipcoach-logo.jpg';
 
 export const Navigation = () => {
   const location = useLocation();
@@ -28,9 +29,9 @@ export const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 text-foreground hover:text-primary transition-colors">
-            <Activity className="h-8 w-8 text-primary" />
-            <span className="text-xl font-bold">Routine Coach</span>
+          <Link to="/" className="flex items-center gap-3 text-foreground hover:text-primary transition-colors">
+            <img src={logo} alt="FlipCoach AI" className="h-10 w-10 object-contain" />
+            <span className="text-xl font-bold">FlipCoach AI</span>
           </Link>
 
           {/* Desktop Navigation */}
