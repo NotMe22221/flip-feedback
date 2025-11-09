@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_recommendations: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean | null
+          plan_id: string | null
+          priority: string | null
+          recommendation_text: string
+          recommendation_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          plan_id?: string | null
+          priority?: string | null
+          recommendation_text: string
+          recommendation_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          plan_id?: string | null
+          priority?: string | null
+          recommendation_text?: string
+          recommendation_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_recommendations_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       analysis_sessions: {
         Row: {
           ai_score: number | null
@@ -74,6 +115,149 @@ export type Database = {
           video_path?: string | null
           video_url?: string | null
           voice_notes?: string | null
+        }
+        Relationships: []
+      }
+      training_goals: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          current_value: number | null
+          deadline: string | null
+          description: string | null
+          id: string
+          is_completed: boolean | null
+          plan_id: string
+          target_metric: string
+          target_value: number
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          plan_id: string
+          target_metric: string
+          target_value: number
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          current_value?: number | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          is_completed?: boolean | null
+          plan_id?: string
+          target_metric?: string
+          target_value?: number
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_goals_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_milestones: {
+        Row: {
+          achieved_at: string
+          description: string | null
+          id: string
+          milestone_type: string
+          plan_id: string | null
+          session_id: string | null
+          title: string
+          user_id: string
+          value: number | null
+        }
+        Insert: {
+          achieved_at?: string
+          description?: string | null
+          id?: string
+          milestone_type: string
+          plan_id?: string | null
+          session_id?: string | null
+          title: string
+          user_id: string
+          value?: number | null
+        }
+        Update: {
+          achieved_at?: string
+          description?: string | null
+          id?: string
+          milestone_type?: string
+          plan_id?: string | null
+          session_id?: string | null
+          title?: string
+          user_id?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "training_milestones_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "training_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "training_milestones_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "analysis_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      training_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_date: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          start_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          start_date?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

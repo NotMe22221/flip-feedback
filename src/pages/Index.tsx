@@ -9,11 +9,12 @@ import { SpeechToText } from "@/components/SpeechToText";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
 import { BatchUploadProgress, BatchFileStatus } from "@/components/BatchUploadProgress";
 import { AggregatedResults, BatchAnalysisResult } from "@/components/AggregatedResults";
+import { TrainingPlanDashboard } from "@/components/TrainingPlanDashboard";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { detectPoseInVideo, detectPoseInImage, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
 import { extractFramesFromVideo, imageToBase64 } from "@/lib/videoFrameExtractor";
-import { Upload, BarChart3, History, Mic, Activity, LogOut } from "lucide-react";
+import { Upload, BarChart3, History, Mic, Activity, LogOut, Target } from "lucide-react";
 
 interface SessionData {
   id: string;
@@ -618,7 +619,7 @@ const Index = () => {
         </Card>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-5 mb-8 glass-card">
+          <TabsList className="grid w-full max-w-4xl mx-auto grid-cols-6 mb-8 glass-card">
             <TabsTrigger value="upload" className="gap-2">
               <Upload className="w-4 h-4" />
               Upload
@@ -630,6 +631,10 @@ const Index = () => {
             <TabsTrigger value="batch-progress" className="gap-2" disabled={!isBatchProcessing && batchProgress.size === 0}>
               <Activity className="w-4 h-4" />
               Progress
+            </TabsTrigger>
+            <TabsTrigger value="training" className="gap-2">
+              <Target className="w-4 h-4" />
+              Training
             </TabsTrigger>
             <TabsTrigger value="notes" className="gap-2">
               <Mic className="w-4 h-4" />
@@ -675,6 +680,10 @@ const Index = () => {
                 onCancel={handleCancelBatch}
               />
             )}
+          </TabsContent>
+
+          <TabsContent value="training">
+            <TrainingPlanDashboard />
           </TabsContent>
 
           <TabsContent value="notes">
