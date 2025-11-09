@@ -42,16 +42,17 @@ serve(async (req) => {
 
     const stripe = new Stripe(stripeKey, { apiVersion: "2025-08-27.basil" });
 
-    // Get all active subscriptions
-    const activeSubscriptions = await stripe.subscriptions.list({
-      status: "active",
+    // Get all subscriptions for growth metrics
+    const allSubscriptions = await stripe.subscriptions.list({
+      status: "all",
       limit: 100,
     });
-    logStep("Fetched active subscriptions", { count: activeSubscriptions.data.length });
+    logStep("Fetched all subscriptions", { count: allSubscriptions.data.length });
 
-    // Separate trial and paid subscriptions
-    const trialSubs = activeSubscriptions.data.filter((sub: any) => sub.status === "trialing");
-    const paidSubs = activeSubscriptions.data.filter((sub: any) => sub.status === "active" && sub.status !== "trialing");
+    // Get active subscriptions
+    const activeSubscriptions = allSubscriptions.data.filter((sub: any) => sub.status === "active" || sub.status === "trialing");
+    const trialSubs = activeSubscriptions.filter((sub: any) => sub.status === "trialing");
+    const paidSubs = activeSubscriptions.filter((sub: any) => sub.status === "active" && sub.status !== "trialing");
 
     logStep("Separated subscriptions", { 
       trials: trialSubs.length, 
@@ -64,7 +65,6 @@ serve(async (req) => {
       const price = sub.items.data[0]?.price;
       if (price && price.recurring) {
         const amount = price.unit_amount || 0;
-        // Convert to monthly if needed
         if (price.recurring.interval === "year") {
           mrr += amount / 12;
         } else if (price.recurring.interval === "month") {
@@ -72,28 +72,76 @@ serve(async (req) => {
         }
       }
     }
-    // Convert from cents to dollars
     mrr = mrr / 100;
 
     // Calculate conversion rate
-    // For simplicity, we'll use all-time metrics
-    // In production, you'd want to track this over time in a database
     const totalTrials = trialSubs.length;
     const totalPaid = paidSubs.length;
     const conversionRate = totalPaid + totalTrials > 0 
       ? (totalPaid / (totalPaid + totalTrials)) * 100 
       : 0;
 
+    // Calculate growth data for the last 30 days
+    const growthData: Array<{
+      date: string;
+      subscribers: number;
+      trials: number;
+      mrr: number;
+    }> = [];
+    
+    for (let i = 29; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      
+      const dailySubscriptions = allSubscriptions.data.filter((sub: any) => {
+        const createdDate = new Date(sub.created * 1000);
+        return createdDate <= date && (sub.status === 'active' || sub.status === 'trialing');
+      });
+      
+      const activeCount = dailySubscriptions.filter((s: any) => s.status === 'active').length;
+      const trialCount = dailySubscriptions.filter((s: any) => s.status === 'trialing').length;
+      const dailyMRR = dailySubscriptions
+        .filter((s: any) => s.status === 'active')
+        .reduce((sum: number, sub: any) => {
+          const price = sub.items.data[0]?.price;
+          const amount = price?.unit_amount || 0;
+          return sum + (amount / 100);
+        }, 0);
+      
+      growthData.push({
+        date: dateStr,
+        subscribers: activeCount,
+        trials: trialCount,
+        mrr: Math.round(dailyMRR),
+      });
+    }
+
+    // Calculate subscription breakdown by product
+    const productCounts: Record<string, number> = {};
+    paidSubs.forEach((sub: any) => {
+      const productId = sub.items.data[0]?.price?.product as string;
+      productCounts[productId] = (productCounts[productId] || 0) + 1;
+    });
+    
+    const subscriptionBreakdown = Object.entries(productCounts).map(([productId, count]) => ({
+      name: productId.includes('TOSy') ? 'Pro' : 'Enterprise',
+      value: count,
+    }));
+
     logStep("Calculated metrics", { 
       mrr, 
-      conversionRate: conversionRate.toFixed(2) 
+      conversionRate: conversionRate.toFixed(2),
+      growthDataPoints: growthData.length 
     });
 
     return new Response(JSON.stringify({
       active_subscribers: paidSubs.length,
       trial_users: trialSubs.length,
-      conversion_rate: conversionRate,
-      mrr: mrr,
+      conversion_rate: Math.round(conversionRate * 10) / 10,
+      mrr: Math.round(mrr),
+      growth_data: growthData,
+      subscription_breakdown: subscriptionBreakdown,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
