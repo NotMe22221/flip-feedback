@@ -7,6 +7,8 @@ import { AnalysisResults } from "@/components/AnalysisResults";
 import { SessionHistory } from "@/components/SessionHistory";
 import { SpeechToText } from "@/components/SpeechToText";
 import { AnimatedBackground } from "@/components/AnimatedBackground";
+import { BatchUploadProgress, BatchFileStatus } from "@/components/BatchUploadProgress";
+import { AggregatedResults, BatchAnalysisResult } from "@/components/AggregatedResults";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { detectPoseInVideo, detectPoseInImage, analyzePose, PoseKeypoint } from "@/lib/poseAnalysis";
@@ -31,6 +33,13 @@ const Index = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [user, setUser] = useState<any>(null);
   const ITEMS_PER_PAGE = 10;
+  
+  // Batch processing state
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [batchProgress, setBatchProgress] = useState<Map<string, BatchFileStatus>>(new Map());
+  const [batchResults, setBatchResults] = useState<BatchAnalysisResult[]>([]);
+  const [currentBatchId, setCurrentBatchId] = useState<string | null>(null);
+  
   const [currentAnalysis, setCurrentAnalysis] = useState<{
     videoUrl: string;
     keypointsData: PoseKeypoint[][];
@@ -379,8 +388,206 @@ const Index = () => {
     video.src = URL.createObjectURL(file);
   };
 
+  const handleBatchSelect = async (files: File[]) => {
+    const batchId = crypto.randomUUID();
+    setCurrentBatchId(batchId);
+    setIsBatchProcessing(true);
+    setBatchResults([]);
+    
+    // Initialize progress for all files
+    const initialProgress = new Map<string, BatchFileStatus>();
+    files.forEach((file, index) => {
+      initialProgress.set(`${index}`, {
+        file,
+        status: 'waiting',
+        progress: 0,
+      });
+    });
+    setBatchProgress(initialProgress);
+    setActiveTab("batch-progress");
+
+    const results: BatchAnalysisResult[] = [];
+
+    // Process files sequentially
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const fileKey = `${i}`;
+      
+      try {
+        // Update status to processing
+        setBatchProgress(prev => {
+          const newMap = new Map(prev);
+          const current = newMap.get(fileKey);
+          if (current) {
+            newMap.set(fileKey, { ...current, status: 'processing', progress: 0 });
+          }
+          return newMap;
+        });
+
+        const isVideo = file.type.startsWith("video/");
+        let analysis: any;
+        let publicUrl: string;
+        let keypointsData: PoseKeypoint[][];
+
+        if (isVideo) {
+          // Video processing
+          const video = document.createElement("video");
+          video.preload = "metadata";
+          
+          await new Promise<void>((resolve, reject) => {
+            video.onloadedmetadata = () => {
+              window.URL.revokeObjectURL(video.src);
+              if (video.duration > 20) {
+                reject(new Error("Video too long"));
+              }
+              resolve();
+            };
+            video.src = URL.createObjectURL(file);
+          });
+
+          // Upload video
+          const fileName = `${Date.now()}-${file.name}`;
+          const filePath = `${user.id}/${fileName}`;
+          await supabase.storage.from("routine-videos").upload(filePath, file);
+          const { data: { publicUrl: url } } = supabase.storage
+            .from("routine-videos")
+            .getPublicUrl(filePath);
+          publicUrl = url;
+
+          // Detect pose with progress
+          keypointsData = await detectPoseInVideo(file, (progress) => {
+            setBatchProgress(prev => {
+              const newMap = new Map(prev);
+              const current = newMap.get(fileKey);
+              if (current) {
+                newMap.set(fileKey, { ...current, progress });
+              }
+              return newMap;
+            });
+          });
+
+          analysis = analyzePose(keypointsData);
+
+          // Save to database with batch_id
+          await supabase.from("analysis_sessions").insert({
+            user_id: user.id,
+            video_path: filePath,
+            duration_seconds: video.duration,
+            ai_score: analysis.aiScore,
+            posture_score: analysis.posture,
+            stability_score: analysis.stability,
+            smoothness_score: analysis.smoothness,
+            feedback_text: analysis.feedback.join("\n"),
+            keypoints_data: keypointsData as any,
+            avg_knee_angle: analysis.avgKneeAngle,
+            avg_hip_angle: analysis.avgHipAngle,
+            landing_stability: analysis.landingStability,
+            batch_id: batchId,
+          } as any);
+        } else {
+          // Image processing
+          const imageData = await imageToBase64(file);
+          const fileName = `${Date.now()}-${file.name}`;
+          const filePath = `${user.id}/${fileName}`;
+          await supabase.storage.from("routine-videos").upload(filePath, file);
+          
+          const { data: { publicUrl: url } } = supabase.storage
+            .from("routine-videos")
+            .getPublicUrl(filePath);
+          publicUrl = url;
+
+          const poseKeypoints = await detectPoseInImage(file);
+          keypointsData = poseKeypoints.length > 0 ? [poseKeypoints] : [];
+
+          if (poseKeypoints.length > 0) {
+            analysis = analyzePose([poseKeypoints]);
+          } else {
+            analysis = { aiScore: 5, posture: 50, stability: 50, smoothness: 50, feedback: ["No pose detected"] };
+          }
+
+          await supabase.from("analysis_sessions").insert({
+            user_id: user.id,
+            video_path: filePath,
+            video_url: publicUrl,
+            ai_score: analysis.aiScore,
+            posture_score: analysis.posture,
+            stability_score: analysis.stability,
+            smoothness_score: analysis.smoothness,
+            feedback_text: analysis.feedback.join('\n'),
+            keypoints_data: keypointsData as any,
+            batch_id: batchId,
+          } as any);
+        }
+
+        // Add to results
+        results.push({
+          fileName: file.name,
+          videoUrl: publicUrl,
+          aiScore: analysis.aiScore,
+          posture: analysis.posture,
+          stability: analysis.stability,
+          smoothness: analysis.smoothness,
+          createdAt: new Date(),
+        });
+
+        // Update status to complete
+        setBatchProgress(prev => {
+          const newMap = new Map(prev);
+          const current = newMap.get(fileKey);
+          if (current) {
+            newMap.set(fileKey, {
+              ...current,
+              status: 'complete',
+              progress: 100,
+              aiScore: analysis.aiScore,
+            });
+          }
+          return newMap;
+        });
+
+      } catch (error) {
+        console.error(`Error processing file ${file.name}:`, error);
+        setBatchProgress(prev => {
+          const newMap = new Map(prev);
+          const current = newMap.get(fileKey);
+          if (current) {
+            newMap.set(fileKey, {
+              ...current,
+              status: 'failed',
+              error: error instanceof Error ? error.message : "Processing failed",
+            });
+          }
+          return newMap;
+        });
+      }
+    }
+
+    setBatchResults(results);
+    setIsBatchProcessing(false);
+    await fetchSessions();
+    
+    toast({
+      title: "Batch processing complete!",
+      description: `Processed ${results.length} of ${files.length} files successfully`,
+    });
+
+    // Auto-switch to results after completion
+    setTimeout(() => {
+      setActiveTab("batch-results");
+    }, 2000);
+  };
+
+  const handleCancelBatch = () => {
+    setIsBatchProcessing(false);
+    setBatchProgress(new Map());
+    setBatchResults([]);
+    setCurrentBatchId(null);
+    setActiveTab("upload");
+  };
+
   const handleNewAnalysis = () => {
     setCurrentAnalysis(null);
+    setBatchResults([]);
     setActiveTab("upload");
   };
 
@@ -411,14 +618,18 @@ const Index = () => {
         </Card>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full max-w-2xl mx-auto grid-cols-4 mb-8 glass-card">
+          <TabsList className="grid w-full max-w-3xl mx-auto grid-cols-5 mb-8 glass-card">
             <TabsTrigger value="upload" className="gap-2">
               <Upload className="w-4 h-4" />
               Upload
             </TabsTrigger>
-            <TabsTrigger value="results" className="gap-2" disabled={!currentAnalysis}>
+            <TabsTrigger value="results" className="gap-2" disabled={!currentAnalysis && batchResults.length === 0}>
               <BarChart3 className="w-4 h-4" />
               Results
+            </TabsTrigger>
+            <TabsTrigger value="batch-progress" className="gap-2" disabled={!isBatchProcessing && batchProgress.size === 0}>
+              <Activity className="w-4 h-4" />
+              Progress
             </TabsTrigger>
             <TabsTrigger value="notes" className="gap-2">
               <Mic className="w-4 h-4" />
@@ -434,12 +645,13 @@ const Index = () => {
             <UploadSection 
               onVideoSelect={handleVideoSelect} 
               onImageSelect={handleImageSelect}
-              isProcessing={isProcessing} 
+              onBatchSelect={handleBatchSelect}
+              isProcessing={isProcessing || isBatchProcessing} 
             />
           </TabsContent>
 
           <TabsContent value="results">
-            {currentAnalysis && (
+            {currentAnalysis ? (
               <AnalysisResults
                 videoUrl={currentAnalysis.videoUrl}
                 keypointsData={currentAnalysis.keypointsData}
@@ -447,6 +659,20 @@ const Index = () => {
                 feedback={currentAnalysis.feedback}
                 visionAnalysis={currentAnalysis.visionAnalysis}
                 onNewAnalysis={handleNewAnalysis}
+              />
+            ) : batchResults.length > 0 ? (
+              <AggregatedResults
+                results={batchResults}
+                onNewAnalysis={handleNewAnalysis}
+              />
+            ) : null}
+          </TabsContent>
+
+          <TabsContent value="batch-progress">
+            {batchProgress.size > 0 && (
+              <BatchUploadProgress
+                batchProgress={batchProgress}
+                onCancel={handleCancelBatch}
               />
             )}
           </TabsContent>

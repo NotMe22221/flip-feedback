@@ -19,6 +19,7 @@ export type Database = {
           ai_score: number | null
           avg_hip_angle: number | null
           avg_knee_angle: number | null
+          batch_id: string | null
           created_at: string
           duration_seconds: number | null
           feedback_text: string | null
@@ -38,6 +39,7 @@ export type Database = {
           ai_score?: number | null
           avg_hip_angle?: number | null
           avg_knee_angle?: number | null
+          batch_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           feedback_text?: string | null
@@ -57,6 +59,7 @@ export type Database = {
           ai_score?: number | null
           avg_hip_angle?: number | null
           avg_knee_angle?: number | null
+          batch_id?: string | null
           created_at?: string
           duration_seconds?: number | null
           feedback_text?: string | null

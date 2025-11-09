@@ -2,9 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { History, TrendingUp, ChevronLeft, ChevronRight, MessageSquare, ChevronDown } from "lucide-react";
+import { History, TrendingUp, ChevronLeft, ChevronRight, MessageSquare, ChevronDown, Download } from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { exportSessionsToCSV, downloadCSV } from "@/lib/csvExport";
+import { useToast } from "@/hooks/use-toast";
 
 interface Session {
   id: string;
@@ -25,6 +28,8 @@ interface SessionHistoryProps {
 
 export const SessionHistory = ({ sessions, currentPage, totalPages, onPageChange }: SessionHistoryProps) => {
   const [openNotes, setOpenNotes] = useState<string[]>([]);
+  const [isExporting, setIsExporting] = useState(false);
+  const { toast } = useToast();
 
   const toggleNotes = (sessionId: string) => {
     setOpenNotes(prev => 
@@ -55,14 +60,69 @@ export const SessionHistory = ({ sessions, currentPage, totalPages, onPageChange
 
   const improvement = calculateImprovement();
 
+  const handleExportCSV = async () => {
+    setIsExporting(true);
+    try {
+      // Fetch ALL sessions with complete data
+      const { data, error } = await supabase
+        .from("analysis_sessions")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      if (!data || data.length === 0) {
+        toast({
+          title: "No data to export",
+          description: "You don't have any sessions yet.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Convert to CSV
+      const csvContent = exportSessionsToCSV(data);
+      
+      // Download with timestamp filename
+      const filename = `flipcoach-sessions-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+      downloadCSV(csvContent, filename);
+
+      toast({
+        title: "Export successful",
+        description: `Downloaded ${data.length} sessions to ${filename}`,
+      });
+    } catch (error) {
+      console.error("Export error:", error);
+      toast({
+        title: "Export failed",
+        description: "There was an error exporting your sessions.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <Card className="mb-6 shadow-lg border-2 border-primary/20">
         <CardHeader className="bg-gradient-to-r from-primary/10 to-blue-600/10">
-          <CardTitle className="flex items-center gap-2">
-            <History className="w-5 h-5 text-primary" />
-            Recent Sessions
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <History className="w-5 h-5 text-primary" />
+              Recent Sessions
+            </CardTitle>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportCSV}
+              disabled={isExporting || sessions.length === 0}
+              className="gap-2"
+            >
+              <Download className="w-4 h-4" />
+              {isExporting ? "Exporting..." : "Download CSV"}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="pt-6">
           {improvement && (
