@@ -79,15 +79,17 @@ export const Navigation = () => {
             ))}
           </div>
 
-          {/* Desktop CTAs */}
-          <div className="hidden md:flex items-center gap-4">
-            <Link to="/auth">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link to="/auth">
-              <Button className="gradient-primary glow-blue">Start Free Trial</Button>
-            </Link>
-          </div>
+          {/* Desktop CTAs - Only show on landing page */}
+          {!isAppRoute && (
+            <div className="hidden md:flex items-center gap-4">
+              <Link to="/auth">
+                <Button variant="ghost">Sign In</Button>
+              </Link>
+              <Link to="/auth">
+                <Button className="gradient-primary glow-blue">Start Free Trial</Button>
+              </Link>
+            </div>
+          )}
 
           {/* Mobile Menu Button */}
           <button
@@ -123,14 +125,16 @@ export const Navigation = () => {
                 </Link>
               )
             ))}
-            <div className="pt-4 space-y-2">
-              <Link to="/auth" className="block" onClick={() => setMobileMenuOpen(false)}>
-                <Button variant="ghost" className="w-full">Sign In</Button>
-              </Link>
-              <Link to="/auth" className="block" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full gradient-primary glow-blue">Start Free Trial</Button>
-              </Link>
-            </div>
+            {!isAppRoute && (
+              <div className="pt-4 space-y-2">
+                <Link to="/auth" className="block" onClick={() => setMobileMenuOpen(false)}>
+                  <Button variant="ghost" className="w-full">Sign In</Button>
+                </Link>
+                <Link to="/auth" className="block" onClick={() => setMobileMenuOpen(false)}>
+                  <Button className="w-full gradient-primary glow-blue">Start Free Trial</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}
