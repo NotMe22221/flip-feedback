@@ -14,8 +14,8 @@ const tiers = [
     price: "$29",
     period: "month",
     description: "14-day free trial, then $29/month",
-    productId: "prod_RlKN6kh1xTyDZN",
-    priceId: "price_1QsLwPRqbfnxgpN5Fx1Y0Qnz",
+    productId: "prod_TOSyy5geLySBFw",
+    priceId: "price_1SRg2hRutEh7PyS1C29VbM3C",
     features: [
       "Unlimited video uploads",
       "AI-powered analysis",
@@ -31,8 +31,8 @@ const tiers = [
     price: "$99",
     period: "month",
     description: "14-day free trial, then $99/month",
-    productId: "prod_RlKODHu6DHb4hS",
-    priceId: "price_1QsLxXRqbfnxgpN5o37DuJ5n",
+    productId: "prod_TOSyHDSECaOnpz",
+    priceId: "price_1SRg2xRutEh7PyS19hXjg1fT",
     features: [
       "Everything in Pro",
       "Team collaboration",
